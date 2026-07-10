@@ -116,6 +116,9 @@ function preload() {
   imgBgTrees   = loadImage('assets/images/Asset 11.png');
   imgBushes    = loadImage('assets/images/Asset 9.png');
   imgGround    = loadImage('assets/images/Asset 10.png');
+
+  elleground = loadImage('assets/images/GroundNighttime.png');
+
   imgFgTrees   = loadImage('assets/images/Asset 8.png');
   imgSprites   = loadImage('assets/images/sprites2.png');
   imgLog       = loadImage('assets/images/log.png');
@@ -166,7 +169,9 @@ function draw() {
 
   isMoving = false;
   let movingInput = keyIsDown(65) || keyIsDown(37) || keyIsDown(68) || keyIsDown(39);
+
   let goLeft  = flipped ? (keyIsDown(68)||keyIsDown(39)) : (keyIsDown(65)||keyIsDown(37));
+
   let goRight = flipped ? (keyIsDown(65)||keyIsDown(37)) : (keyIsDown(68)||keyIsDown(39));
   if (goLeft)  { worldX -= WALK_SPEED; if (worldX<0) worldX=0; facingLeft=true;  isMoving=true; }
   if (goRight) { worldX += WALK_SPEED; facingLeft=false; isMoving=true; }
@@ -315,7 +320,7 @@ function drawBG() {
   tileLayer(imgBgTrees, height, 0, bgScroll*0.12);
   let bushH = height*0.30;
   tileLayer(imgBushes, bushH, height-bushH-groundH()*0.50, bgScroll*0.04);
-  tileLayer(imgGround, groundH(), height-groundH(), worldX*0.45);
+  tileLayer(elleground, groundH(), height-groundH(), worldX*0.45);
 }
 
 function drawFG() { tileLayer(imgFgTrees, height, 0, worldX*1.15); }
