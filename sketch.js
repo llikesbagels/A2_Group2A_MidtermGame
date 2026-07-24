@@ -91,8 +91,9 @@ const LOGS  = [{ wx:2200 }, { wx:3600 }, { wx:4800 }];
 const ROCKS = [{ wx:1500 }, { wx:2900 }, { wx:4200 }];
 
 let animals = [
-  { wx:2600, type:'rabbit', dir: 1, range:110, speed:2.0, frame:0, ft:0 },
-  { wx:4000, type:'racoon', dir: 1, range: 90, speed:1.5, frame:0, ft:0 },
+  { wx:2600, type:'rabbit', dir: 1, range:110, speed:2.0, frame:0, ft:0, vx:0 },
+  { wx:4000, type:'racoon', dir: 1, range: 90, speed:1.5, frame:0, ft:0, vx:0 },
+  { wx:5200, type:'bear', dir: -1, range:220, speed:1.2, frame:0, ft:0, vx:0 },
 ];
 animals.forEach(a => a.startWx = a.wx);
 
@@ -132,6 +133,7 @@ function preload() {
   imgPlatform2 = loadImage('assets/images/platform2.png');
   imgSpikes    = loadImage('assets/images/spikes.png');
   imgFinishSign= loadImage('assets/images/youmadeit.png');
+  bear = loadImage('assets/images/bear.jpg');
 
   // NOTE: sounds are deliberately NOT loaded here. p5.sound's preload
   // tracking does not reliably resolve on a failed/missing file even
@@ -156,6 +158,7 @@ function windowResized() {
   if (onGround) charY = groundY();
 }
 
+
 // ─────────────────────────────────────────────────────────
 function draw() {
   startAudioOnce();
@@ -165,7 +168,11 @@ function draw() {
 
   if (introTimer > 0) {
     introTimer--;
-    drawBG(); drawStartSign(); drawChar(); drawFG(); drawIntroOverlay();
+    drawBG(); 
+    drawStartSign();
+     drawChar(); 
+     drawFG(); 
+     drawIntroOverlay();
     return;
   }
 
@@ -203,22 +210,6 @@ function draw() {
     if (animTimer>=ANIM_SPEED) { animTimer=0; animFrame=(animFrame+1)%NUM_FRAMES; }
   } else { animFrame=0; animTimer=0; }
 
-  // Debug keys
-     if (key === "o" || key === "O") {
-    debugMode = !debugMode;
-    return;
-  }
-
-    if (key === "l" || key === "L") {
-    gameLost = true;
-    return;
-  }
-
-    if (key === "k" || key === "K") {
-    gameWon = true;
-    return;
-  }
-
   velY  += GRAVITY;
   charY += velY;
   let gy = groundY();
@@ -239,9 +230,30 @@ function draw() {
   updateFlip();
 
   for (let a of animals) {
-    a.wx += a.dir * a.speed;
-    if (a.wx > a.startWx+a.range || a.wx < a.startWx-a.range) a.dir *= -1;
-    a.ft++; if (a.ft>=8) { a.ft=0; a.frame=(a.frame+1)%2; }
+    if (a.type === 'bear') {
+      let playerWorldX = worldX + charX - width * 0.25;
+      let toPlayer = playerWorldX - a.wx;
+      let attackRange = 100;
+      let targetDir = toPlayer > 0 ? 1 : -1;
+
+      if (Math.abs(toPlayer) < attackRange) {
+        a.vx = lerp(a.vx, targetDir * 3.2, 0.16);
+      } else {
+        a.vx = lerp(a.vx, targetDir * 1.4, 0.1);
+      }
+
+      a.wx += a.vx;
+      a.dir = targetDir;
+    } else {
+      a.wx += a.dir * a.speed;
+      if (a.wx > a.startWx + a.range || a.wx < a.startWx - a.range) a.dir *= -1;
+    }
+
+    a.ft++;
+    if (a.ft >= 8) {
+      a.ft = 0;
+      a.frame = (a.frame + 1) % 2;
+    }
   }
 
   if (worldX >= LEVEL_END) {
@@ -266,7 +278,7 @@ function draw() {
   drawFG();
   drawHUD();
   drawFlipHUD();
-   if (debugMode) drawDebugPanel();
+  if (debugMode) drawDebugPanel();
 }
 
 // ─────────────────────────────────────────────────────────
@@ -339,7 +351,7 @@ function drawBG() {
   tileLayer(imgBgTrees, height, 0, bgScroll*0.12);
   let bushH = height*0.30;
   tileLayer(imgBushes, bushH, height-bushH-groundH()*0.50, bgScroll*0.04);
-  tileLayer(imgGround, groundH(), height-groundH(), worldX*0.45);
+  tileLayer(elleground, groundH(), height-groundH(), worldX*0.45);
 }
 
 function drawFG() { tileLayer(imgFgTrees, height, 0, worldX*1.15); }
@@ -380,7 +392,7 @@ function drawPit() {
 
 // ─────────────────────────────────────────────────────────
 function drawPlatforms() {
-  let srcX2=3, srcY2=148, srcW2=148, srcH2=229;
+  let srcX2=3, srcY2=100, srcW2=148, srcH2=229;
   imageMode(CORNER);
   for (let p of PLATFORMS) {
     let sx=toScreen(p.wx);
@@ -430,6 +442,10 @@ function drawAnimals() {
       let dh=height*0.09, dw=dh*(74/72), srcX=18+a.frame*74;
       if (a.dir<0) { push(); translate(sx+dw,gy-dh); scale(-1,1); image(imgRacoon,0,0,dw,dh,srcX,288,74,72); pop(); }
       else         { image(imgRacoon,sx,gy-dh,dw,dh,srcX,288,74,72); }
+    } else if (a.type==='bear') {
+      let dh=height*0.13, dw=dh*1.05;
+      if (a.dir<0) { push(); translate(sx+dw,gy-dh); scale(-1,1); image(bear,0,0,dw,dh); pop(); }
+      else         { image(bear,sx,gy-dh,dw,dh); }
     } else {
       let dh=height*0.08, dw=dh*(95/80), srcX=a.frame*95;
       if (a.dir<0) { push(); translate(sx+dw,gy-dh); scale(-1,1); image(imgRabbit,0,0,dw,dh,srcX,80,95,80); pop(); }
@@ -494,8 +510,17 @@ function checkDamage() {
   }
   for (let a of animals) {
     let sx=toScreen(a.wx);
-    let dw=a.type==='racoon'?height*0.09*(74/72):height*0.08*(95/80);
-    if (px2>sx+12&&px1<sx+dw-12) { takeDamage(); return; }
+    let dw = a.type === 'racoon'
+      ? height * 0.09 * (74 / 72)
+      : a.type === 'bear'
+        ? height * 0.11
+        : height * 0.08 * (95 / 80);
+    if (px2 > sx + 12 && px1 < sx + dw - 12) {
+      if (a.type === 'bear' || a.type === 'racoon' || a.type === 'rabbit') {
+        takeDamage();
+        return;
+      }
+    }
   }
 }
 
@@ -706,11 +731,22 @@ function drawWinScreen() {
 
 // ─────────────────────────────────────────────────────────
 function keyPressed() {
-
   startAudioOnce();
 
+  if (key === 'o' || key === 'O') {
+    debugMode = !debugMode;
+    return;
+  }
 
+  if (key === 'l' || key === 'L') {
+    gameLost = true;
+    return;
+  }
 
+  if (key === 'k' || key === 'K') {
+    gameWon = true;
+    return;
+  }
 
   if (introTimer > 0 && !introFadeStarted) {
     introFadeStarted = true;
