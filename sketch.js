@@ -63,6 +63,8 @@ const LEVEL_END = 8500;
 let gameWon     = false;
 let gameLost    = false;
 
+let debugMode = false;
+
 let hp           = 3;
 const MAX_HP     = 3;
 let invTimer     = 0;
@@ -100,8 +102,8 @@ const PIT_END    = 6400;
 const PLATFORMS = [
   { wx: 5650, wyOff: 0.20 },
   { wx: 5920, wyOff: 0.28 },
-  { wx: 6200, wyOff: 0.20 },
-  { wx: 6480, wyOff: 0.12 },
+  { wx: 6200, wyOff: 0.40 },
+  { wx: 6480, wyOff: 0.50 },
 ];
 const PLAT_W = 115;
 const PLAT_H = 28;
@@ -117,7 +119,7 @@ function preload() {
   imgBushes    = loadImage('assets/images/Asset 9.png');
   imgGround    = loadImage('assets/images/Asset 10.png');
 
-  elleground = loadImage('assets/images/GroundNighttime.png');
+  elleground = loadImage('assets/images/ground2.png');
 
   imgFgTrees   = loadImage('assets/images/Asset 8.png');
   imgSprites   = loadImage('assets/images/sprites2.png');
@@ -201,6 +203,22 @@ function draw() {
     if (animTimer>=ANIM_SPEED) { animTimer=0; animFrame=(animFrame+1)%NUM_FRAMES; }
   } else { animFrame=0; animTimer=0; }
 
+  // Debug keys
+     if (key === "o" || key === "O") {
+    debugMode = !debugMode;
+    return;
+  }
+
+    if (key === "l" || key === "L") {
+    gameLost = true;
+    return;
+  }
+
+    if (key === "k" || key === "K") {
+    gameWon = true;
+    return;
+  }
+
   velY  += GRAVITY;
   charY += velY;
   let gy = groundY();
@@ -236,7 +254,7 @@ function draw() {
   if (levelTimer >= TIME_LIMIT) { gameLost=true; if (sndMusic && sndMusic.isLoaded()) sndMusic.stop(); sndMusic.setVolume(0.01);return; }
   if (invTimer > 0) invTimer--;
   else checkDamage();
-
+ 
   drawBG();
   drawStartSign();
   drawPit();
@@ -248,6 +266,7 @@ function draw() {
   drawFG();
   drawHUD();
   drawFlipHUD();
+   if (debugMode) drawDebugPanel();
 }
 
 // ─────────────────────────────────────────────────────────
@@ -378,6 +397,7 @@ function drawObstacles() {
   let gy=groundY();
   let logH=height*0.10, logW=logH*(139/88);
   let rockH=height*0.08, rockW=rockH*(117/66);
+
   imageMode(CORNER);
   for (let o of LOGS) {
     let sx=toScreen(o.wx);
@@ -387,9 +407,17 @@ function drawObstacles() {
   for (let o of ROCKS) {
     let sx=toScreen(o.wx);
     if (sx<-200||sx>width+200) continue;
-    image(imgRock,sx,gy-rockH,rockW,rockH,115,56,117,66);
+    image(imgRock,sx,gy-rockH*1.5,rockW*1.5,rockH,115,56,117,66);
   }
+
+
+
+
+    //add bears
+
 }
+
+
 
 // ─────────────────────────────────────────────────────────
 function drawAnimals() {
@@ -576,6 +604,40 @@ function drawFlipHUD() {
   }
 }
 
+function drawDebugPanel() {
+  fill(0, 0, 0, 200);
+  noStroke();
+  rect(0, height - 80, width, 80);
+
+  fill(255, 220, 50);
+  textSize(11);
+  textAlign(LEFT);
+  text("DEBUG MODE (O to close)", 12, height - 62);
+
+  let buttons = [
+    { label: "O: Start", x: 10 },
+    { label: "1: Level 1", x: 110 },
+    { label: "2: Level 2", x: 210 },
+    { label: "3: Level 3", x: 310 },
+    { label: "K: Win", x: 410 },
+    { label: "L: Game Over", x: 510 },
+  ];
+
+  for (let i = 0; i < buttons.length; i++) {
+    let b = buttons[i];
+
+    fill(60, 60, 90);
+    stroke(100, 100, 140);
+    strokeWeight(1);
+    rect(b.x, height - 50, 88, 34, 4);
+
+    fill(200);
+    noStroke();
+    textSize(12);
+    textAlign(LEFT);
+    text(b.label, b.x + 8, height - 28);
+  }
+}
 // ─────────────────────────────────────────────────────────
 function drawIntroOverlay() {
   let alpha = introTimer <= INTRO_FADE_FRAMES
@@ -644,7 +706,11 @@ function drawWinScreen() {
 
 // ─────────────────────────────────────────────────────────
 function keyPressed() {
+
   startAudioOnce();
+
+
+
 
   if (introTimer > 0 && !introFadeStarted) {
     introFadeStarted = true;
