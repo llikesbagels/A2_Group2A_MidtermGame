@@ -339,7 +339,7 @@ function drawBG() {
   tileLayer(imgBgTrees, height, 0, bgScroll*0.12);
   let bushH = height*0.30;
   tileLayer(imgBushes, bushH, height-bushH-groundH()*0.50, bgScroll*0.04);
-  tileLayer(elleground, groundH(), height-groundH(), worldX*0.45);
+  tileLayer(imgGround, groundH(), height-groundH(), worldX*0.45);
 }
 
 function drawFG() { tileLayer(imgFgTrees, height, 0, worldX*1.15); }
