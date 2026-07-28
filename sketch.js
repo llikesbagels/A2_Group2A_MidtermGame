@@ -1,4 +1,4 @@
-﻿// ─────────────────────────────────────────────────────────
+﻿﻿// ─────────────────────────────────────────────────────────
 //  THROUGH THE TREES — Tutorial Level
 // ─────────────────────────────────────────────────────────
 
@@ -63,8 +63,6 @@ const LEVEL_END = 8500;
 let gameWon     = false;
 let gameLost    = false;
 
-let debugMode = false;
-
 let hp           = 3;
 const MAX_HP     = 3;
 let invTimer     = 0;
@@ -91,9 +89,8 @@ const LOGS  = [{ wx:2200 }, { wx:3600 }, { wx:4800 }];
 const ROCKS = [{ wx:1500 }, { wx:2900 }, { wx:4200 }];
 
 let animals = [
-  { wx:2600, type:'rabbit', dir: 1, range:110, speed:2.0, frame:0, ft:0, vx:0 },
-  { wx:4000, type:'racoon', dir: 1, range: 90, speed:1.5, frame:0, ft:0, vx:0 },
-  { wx:5200, type:'bear', dir: -1, range:220, speed:1.2, frame:0, ft:0, vx:0 },
+  { wx:2600, type:'rabbit', dir: 1, range:110, speed:2.0, frame:0, ft:0 },
+  { wx:4000, type:'racoon', dir: 1, range: 90, speed:1.5, frame:0, ft:0 },
 ];
 animals.forEach(a => a.startWx = a.wx);
 
@@ -103,8 +100,8 @@ const PIT_END    = 6400;
 const PLATFORMS = [
   { wx: 5650, wyOff: 0.20 },
   { wx: 5920, wyOff: 0.28 },
-  { wx: 6200, wyOff: 0.40 },
-  { wx: 6480, wyOff: 0.50 },
+  { wx: 6200, wyOff: 0.20 },
+  { wx: 6480, wyOff: 0.12 },
 ];
 const PLAT_W = 115;
 const PLAT_H = 28;
@@ -116,13 +113,10 @@ function platY(p) { return groundY() - groundY() * p.wyOff; }
 
 // ─────────────────────────────────────────────────────────
 function preload() {
-  imgBgTrees   = loadImage('assets/images/Asset 11.png');
-  imgBushes    = loadImage('assets/images/Asset 9.png');
-  imgGround    = loadImage('assets/images/Asset 10.png');
-
-  elleground = loadImage('assets/images/ground2.png');
-
-  imgFgTrees   = loadImage('assets/images/Asset 8.png');
+  imgBgTrees   = loadImage('assets/images/Asset11.png');
+  imgBushes    = loadImage('assets/images/Asset9.png');
+  imgGround    = loadImage('assets/images/Asset10.png');
+  imgFgTrees   = loadImage('assets/images/Asset8.png');
   imgSprites   = loadImage('assets/images/sprites2.png');
   imgLog       = loadImage('assets/images/log.png');
   imgRock      = loadImage('assets/images/rock.png');
@@ -133,7 +127,6 @@ function preload() {
   imgPlatform2 = loadImage('assets/images/platform2.png');
   imgSpikes    = loadImage('assets/images/spikes.png');
   imgFinishSign= loadImage('assets/images/youmadeit.png');
-  bear = loadImage('assets/images/bear.jpg');
 
   // NOTE: sounds are deliberately NOT loaded here. p5.sound's preload
   // tracking does not reliably resolve on a failed/missing file even
@@ -158,7 +151,6 @@ function windowResized() {
   if (onGround) charY = groundY();
 }
 
-
 // ─────────────────────────────────────────────────────────
 function draw() {
   startAudioOnce();
@@ -168,19 +160,13 @@ function draw() {
 
   if (introTimer > 0) {
     introTimer--;
-    drawBG(); 
-    drawStartSign();
-     drawChar(); 
-     drawFG(); 
-     drawIntroOverlay();
+    drawBG(); drawStartSign(); drawChar(); drawFG(); drawIntroOverlay();
     return;
   }
 
   isMoving = false;
   let movingInput = keyIsDown(65) || keyIsDown(37) || keyIsDown(68) || keyIsDown(39);
-
   let goLeft  = flipped ? (keyIsDown(68)||keyIsDown(39)) : (keyIsDown(65)||keyIsDown(37));
-
   let goRight = flipped ? (keyIsDown(65)||keyIsDown(37)) : (keyIsDown(68)||keyIsDown(39));
   if (goLeft)  { worldX -= WALK_SPEED; if (worldX<0) worldX=0; facingLeft=true;  isMoving=true; }
   if (goRight) { worldX += WALK_SPEED; facingLeft=false; isMoving=true; }
@@ -230,30 +216,9 @@ function draw() {
   updateFlip();
 
   for (let a of animals) {
-    if (a.type === 'bear') {
-      let playerWorldX = worldX + charX - width * 0.25;
-      let toPlayer = playerWorldX - a.wx;
-      let attackRange = 100;
-      let targetDir = toPlayer > 0 ? 1 : -1;
-
-      if (Math.abs(toPlayer) < attackRange) {
-        a.vx = lerp(a.vx, targetDir * 3.2, 0.16);
-      } else {
-        a.vx = lerp(a.vx, targetDir * 1.4, 0.1);
-      }
-
-      a.wx += a.vx;
-      a.dir = targetDir;
-    } else {
-      a.wx += a.dir * a.speed;
-      if (a.wx > a.startWx + a.range || a.wx < a.startWx - a.range) a.dir *= -1;
-    }
-
-    a.ft++;
-    if (a.ft >= 8) {
-      a.ft = 0;
-      a.frame = (a.frame + 1) % 2;
-    }
+    a.wx += a.dir * a.speed;
+    if (a.wx > a.startWx+a.range || a.wx < a.startWx-a.range) a.dir *= -1;
+    a.ft++; if (a.ft>=8) { a.ft=0; a.frame=(a.frame+1)%2; }
   }
 
   if (worldX >= LEVEL_END) {
@@ -266,7 +231,7 @@ function draw() {
   if (levelTimer >= TIME_LIMIT) { gameLost=true; if (sndMusic && sndMusic.isLoaded()) sndMusic.stop(); sndMusic.setVolume(0.01);return; }
   if (invTimer > 0) invTimer--;
   else checkDamage();
- 
+
   drawBG();
   drawStartSign();
   drawPit();
@@ -278,7 +243,6 @@ function draw() {
   drawFG();
   drawHUD();
   drawFlipHUD();
-  if (debugMode) drawDebugPanel();
 }
 
 // ─────────────────────────────────────────────────────────
@@ -351,7 +315,7 @@ function drawBG() {
   tileLayer(imgBgTrees, height, 0, bgScroll*0.12);
   let bushH = height*0.30;
   tileLayer(imgBushes, bushH, height-bushH-groundH()*0.50, bgScroll*0.04);
-  tileLayer(elleground, groundH(), height-groundH(), worldX*0.45);
+  tileLayer(imgGround, groundH(), height-groundH(), worldX*0.45);
 }
 
 function drawFG() { tileLayer(imgFgTrees, height, 0, worldX*1.15); }
@@ -392,7 +356,7 @@ function drawPit() {
 
 // ─────────────────────────────────────────────────────────
 function drawPlatforms() {
-  let srcX2=3, srcY2=100, srcW2=148, srcH2=229;
+  let srcX2=3, srcY2=148, srcW2=148, srcH2=229;
   imageMode(CORNER);
   for (let p of PLATFORMS) {
     let sx=toScreen(p.wx);
@@ -409,7 +373,6 @@ function drawObstacles() {
   let gy=groundY();
   let logH=height*0.10, logW=logH*(139/88);
   let rockH=height*0.08, rockW=rockH*(117/66);
-
   imageMode(CORNER);
   for (let o of LOGS) {
     let sx=toScreen(o.wx);
@@ -419,17 +382,9 @@ function drawObstacles() {
   for (let o of ROCKS) {
     let sx=toScreen(o.wx);
     if (sx<-200||sx>width+200) continue;
-    image(imgRock,sx,gy-rockH*1.5,rockW*1.5,rockH,115,56,117,66);
+    image(imgRock,sx,gy-rockH,rockW,rockH,115,56,117,66);
   }
-
-
-
-
-    //add bears
-
 }
-
-
 
 // ─────────────────────────────────────────────────────────
 function drawAnimals() {
@@ -442,10 +397,6 @@ function drawAnimals() {
       let dh=height*0.09, dw=dh*(74/72), srcX=18+a.frame*74;
       if (a.dir<0) { push(); translate(sx+dw,gy-dh); scale(-1,1); image(imgRacoon,0,0,dw,dh,srcX,288,74,72); pop(); }
       else         { image(imgRacoon,sx,gy-dh,dw,dh,srcX,288,74,72); }
-    } else if (a.type==='bear') {
-      let dh=height*0.13, dw=dh*1.05;
-      if (a.dir<0) { push(); translate(sx+dw,gy-dh); scale(-1,1); image(bear,0,0,dw,dh); pop(); }
-      else         { image(bear,sx,gy-dh,dw,dh); }
     } else {
       let dh=height*0.08, dw=dh*(95/80), srcX=a.frame*95;
       if (a.dir<0) { push(); translate(sx+dw,gy-dh); scale(-1,1); image(imgRabbit,0,0,dw,dh,srcX,80,95,80); pop(); }
@@ -510,17 +461,8 @@ function checkDamage() {
   }
   for (let a of animals) {
     let sx=toScreen(a.wx);
-    let dw = a.type === 'racoon'
-      ? height * 0.09 * (74 / 72)
-      : a.type === 'bear'
-        ? height * 0.11
-        : height * 0.08 * (95 / 80);
-    if (px2 > sx + 12 && px1 < sx + dw - 12) {
-      if (a.type === 'bear' || a.type === 'racoon' || a.type === 'rabbit') {
-        takeDamage();
-        return;
-      }
-    }
+    let dw=a.type==='racoon'?height*0.09*(74/72):height*0.08*(95/80);
+    if (px2>sx+12&&px1<sx+dw-12) { takeDamage(); return; }
   }
 }
 
@@ -629,40 +571,6 @@ function drawFlipHUD() {
   }
 }
 
-function drawDebugPanel() {
-  fill(0, 0, 0, 200);
-  noStroke();
-  rect(0, height - 80, width, 80);
-
-  fill(255, 220, 50);
-  textSize(11);
-  textAlign(LEFT);
-  text("DEBUG MODE (O to close)", 12, height - 62);
-
-  let buttons = [
-    { label: "O: Start", x: 10 },
-    { label: "1: Level 1", x: 110 },
-    { label: "2: Level 2", x: 210 },
-    { label: "3: Level 3", x: 310 },
-    { label: "K: Win", x: 410 },
-    { label: "L: Game Over", x: 510 },
-  ];
-
-  for (let i = 0; i < buttons.length; i++) {
-    let b = buttons[i];
-
-    fill(60, 60, 90);
-    stroke(100, 100, 140);
-    strokeWeight(1);
-    rect(b.x, height - 50, 88, 34, 4);
-
-    fill(200);
-    noStroke();
-    textSize(12);
-    textAlign(LEFT);
-    text(b.label, b.x + 8, height - 28);
-  }
-}
 // ─────────────────────────────────────────────────────────
 function drawIntroOverlay() {
   let alpha = introTimer <= INTRO_FADE_FRAMES
@@ -732,21 +640,6 @@ function drawWinScreen() {
 // ─────────────────────────────────────────────────────────
 function keyPressed() {
   startAudioOnce();
-
-  if (key === 'o' || key === 'O') {
-    debugMode = !debugMode;
-    return;
-  }
-
-  if (key === 'l' || key === 'L') {
-    gameLost = true;
-    return;
-  }
-
-  if (key === 'k' || key === 'K') {
-    gameWon = true;
-    return;
-  }
 
   if (introTimer > 0 && !introFadeStarted) {
     introFadeStarted = true;
