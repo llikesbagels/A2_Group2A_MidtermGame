@@ -1,15 +1,17 @@
-﻿﻿// ─────────────────────────────────────────────────────────
-//  THROUGH THE TREES — Tutorial Level
+﻿//  THROUGH THE TREES — Tutorial Level
 // ─────────────────────────────────────────────────────────
+
 
 let imgSky, imgBgTrees, imgBushes, imgGround, imgFgTrees;
 let imgSprites, imgLog, imgRock, imgRacoon, imgRabbit;
 let imgSign, imgPlatform, imgPlatform2, imgSpikes, imgFinishSign;
 
+
 // ── Sound variables ────────────────────────────────────────
 let sndMusic, sndJump, sndDamage, sndWin, sndWalk;
 let walkSoundTimer = 0;
 let audioStarted    = false;   // has the AudioContext been resumed yet?
+
 
 // Loading the sound FILES doesn't need the AudioContext running —
 // only actually *playing* them does. So they're loaded in preload()
@@ -27,6 +29,7 @@ function loadSounds() {
   sndWalk   = loadSound('assets/sounds/walking.mp3', () => {}, () => { console.warn('walking.mp3 failed to load'); sndWalk   = null; });
 }
 
+
 // Browsers block audio until a real user gesture (keypress/click)
 // resumes the AudioContext. This is almost always why sounds "don't
 // work" even though everything else is wired up correctly — the
@@ -37,14 +40,17 @@ function startAudioOnce() {
     if (typeof userStartAudio === 'function') userStartAudio();
   }
 
+
   if (sndMusic && sndMusic.isLoaded() && !sndMusic.isPlaying()) {
     sndMusic.setVolume(0.4);
     sndMusic.loop();
   }
 }
 
+
 const NUM_FRAMES = 5;
 const ANIM_SPEED = 7;
+
 
 let charX, charY;
 let velY       = 0;
@@ -54,27 +60,36 @@ let animTimer  = 0;
 let facingLeft = false;
 let isMoving   = false;
 
+
 const GRAVITY    = 0.65;
 const JUMP_FORCE = -18;
 const WALK_SPEED = 4;
+
 
 let worldX      = 0;
 const LEVEL_END = 8500;
 let gameWon     = false;
 let gameLost    = false;
 
+
+let debugMode = false;
+
+
 let hp           = 3;
 const MAX_HP     = 3;
 let invTimer     = 0;
 const INV_FRAMES = 80;
 
+
 let levelTimer      = 0;
 const TIME_LIMIT    = 90 * 60;
+
 
 const INTRO_DISPLAY_FRAMES = 10 * 60;
 const INTRO_FADE_FRAMES = 60;
 let introTimer = INTRO_DISPLAY_FRAMES + INTRO_FADE_FRAMES;
 let introFadeStarted = false;
+
 
 const FLIP_AT       = [700, 5200];
 let   flipIndex     = 0;
@@ -85,37 +100,78 @@ let   countdown     = 0;
 let   countdownTimer = 0;
 const COUNTDOWN_FRAMES = 55;
 
+
 const LOGS  = [{ wx:2200 }, { wx:3600 }, { wx:4800 }];
 const ROCKS = [{ wx:1500 }, { wx:2900 }, { wx:4200 }];
 
+
 let animals = [
-  { wx:2600, type:'rabbit', dir: 1, range:110, speed:2.0, frame:0, ft:0 },
-  { wx:4000, type:'racoon', dir: 1, range: 90, speed:1.5, frame:0, ft:0 },
+  { wx:2600, type:'rabbit', dir: 1, range:110, speed:2.0, frame:0, ft:0, vx:0 },
+  { wx:4000, type:'racoon', dir: 1, range: 90, speed:1.5, frame:0, ft:0, vx:0 },
+  { wx:10000, type:'bear', dir: -1, range:220, speed:5, frame:0, ft:0, vx:2 },
 ];
 animals.forEach(a => a.startWx = a.wx);
 
-const PIT_START  = 5600;
-const PIT_END    = 6400;
 
-const PLATFORMS = [
-  { wx: 5650, wyOff: 0.20 },
-  { wx: 5920, wyOff: 0.28 },
-  { wx: 6200, wyOff: 0.20 },
-  { wx: 6480, wyOff: 0.12 },
+const PIT_START  = 5000;
+const PIT_END    = 6000;
+
+let platdistance = 0;
+let platdistanceDir = 1;
+const PLAT_DISTANCE_MIN = 5000 - 5650;
+const PLAT_DISTANCE_MAX = 6000 - 5650;
+
+
+
+
+let PLATFORMS = [
+  { baseWx: 5650, wx: 5650, wyOff: 0.20 },
+  { baseWx: 5920, wx: 5920, wyOff: 0.28 },
+  { baseWx: 6200, wx: 6200, wyOff: 0.40 },
+  { baseWx: 6480, wx: 6480, wyOff: 0.50 },
 ];
-const PLAT_W = 115;
+const PLAT_W = 300;
 const PLAT_H = 28;
+
+function updatePlatDistance() {
+  platdistance += platdistanceDir;
+  if (platdistance >= PLAT_DISTANCE_MAX) {
+    platdistance = PLAT_DISTANCE_MAX;
+    platdistanceDir = -1;
+  } else if (platdistance <= PLAT_DISTANCE_MIN) {
+    platdistance = PLAT_DISTANCE_MIN;
+    platdistanceDir = 1;
+  }
+
+  for (let p of PLATFORMS) {
+    p.wx = p.baseWx + platdistance;
+  }
+}
+
 
 function groundH() { return height * 0.44; }
 function groundY() { return height - groundH() * 0.5; }
-function toScreen(worldPos) { return worldPos - worldX + charX - width * 0.25; }
+function toScreen(worldPos) { return worldPos - worldX; }
 function platY(p) { return groundY() - groundY() * p.wyOff; }
 
+
 // ─────────────────────────────────────────────────────────
+let elerground, bear; // declare the variables used later
+
+
 function preload() {
-  imgBgTrees   = loadImage('assets/images/Asset11.png');
-  imgBushes    = loadImage('assets/images/Asset9.png');
-  imgGround    = loadImage('assets/images/Asset10.png');
+  function l(path, name) {
+    return loadImage(path,
+      img => console.log('loaded', name, img.width + 'x' + img.height),
+      err => { console.error('failed to load', name, path, err); }
+    );
+  }
+  imgBgTrees   = loadImage('assets/images/Stone2.png');
+  //imgBushes    = loadImage('assets/images/Asset9.png');
+  title        = loadImage('assets/images/title.PNG');
+  elleground   = loadImage('assets/images/Stone.png');
+
+
   imgFgTrees   = loadImage('assets/images/Asset8.png');
   imgSprites   = loadImage('assets/images/sprites2.png');
   imgLog       = loadImage('assets/images/log.png');
@@ -126,7 +182,9 @@ function preload() {
   imgPlatform  = loadImage('assets/images/platform.png');
   imgPlatform2 = loadImage('assets/images/platform2.png');
   imgSpikes    = loadImage('assets/images/spikes.png');
-  imgFinishSign= loadImage('assets/images/youmadeit.png');
+  imgFinishSign= loadImage('assets/images/village.jpg');
+  bear = loadImage('assets/images/bear.jpg');
+
 
   // NOTE: sounds are deliberately NOT loaded here. p5.sound's preload
   // tracking does not reliably resolve on a failed/missing file even
@@ -137,6 +195,7 @@ function preload() {
   // checks .isLoaded(), so this is safe even if a file never arrives.
 }
 
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
   imageMode(CORNER);
@@ -146,30 +205,57 @@ function setup() {
  
 }
 
+
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+  charX = width * 0.25;
   if (onGround) charY = groundY();
 }
+
+
+
 
 // ─────────────────────────────────────────────────────────
 function draw() {
   startAudioOnce();
 
+
   if (gameWon)  { drawWinScreen();  return; }
   if (gameLost) { drawLoseScreen(); return; }
 
+
   if (introTimer > 0) {
     introTimer--;
-    drawBG(); drawStartSign(); drawChar(); drawFG(); drawIntroOverlay();
+    drawBG();
+    drawStartSign();
+     drawChar();
+     drawFG();
+     drawIntroOverlay();
     return;
   }
 
+
   isMoving = false;
   let movingInput = keyIsDown(65) || keyIsDown(37) || keyIsDown(68) || keyIsDown(39);
+
+
   let goLeft  = flipped ? (keyIsDown(68)||keyIsDown(39)) : (keyIsDown(65)||keyIsDown(37));
+
+
   let goRight = flipped ? (keyIsDown(65)||keyIsDown(37)) : (keyIsDown(68)||keyIsDown(39));
-  if (goLeft)  { worldX -= WALK_SPEED; if (worldX<0) worldX=0; facingLeft=true;  isMoving=true; }
-  if (goRight) { worldX += WALK_SPEED; facingLeft=false; isMoving=true; }
+  charX = width * 0.25;
+  if (goLeft)  {
+    worldX = max(0, worldX - WALK_SPEED);
+    facingLeft = true;
+    isMoving = true;
+  }
+  if (goRight) {
+    worldX = min(LEVEL_END, worldX + WALK_SPEED);
+    facingLeft = false;
+    isMoving = true;
+  }
+
+  updatePlatDistance();
 
   // Jump sound
   if ((keyIsDown(32)||keyIsDown(87)||keyIsDown(38)) && onGround) {
@@ -177,7 +263,9 @@ function draw() {
     if (sndJump && sndJump.isLoaded()) { sndJump.stop(); sndJump.setVolume(0.1); sndJump.play(); }
   }
 
+
   // Walking sound
+
 
   if (movingInput && isMoving && onGround) {
     walkSoundTimer++;
@@ -191,14 +279,17 @@ function draw() {
     }
   } else { walkSoundTimer = 0; }
 
+
   if (isMoving) {
     animTimer++;
     if (animTimer>=ANIM_SPEED) { animTimer=0; animFrame=(animFrame+1)%NUM_FRAMES; }
   } else { animFrame=0; animTimer=0; }
 
+
   velY  += GRAVITY;
   charY += velY;
   let gy = groundY();
+
 
   onGround = false;
   for (let p of PLATFORMS) {
@@ -213,13 +304,40 @@ function draw() {
   }
   if (charY >= gy) { charY=gy; velY=0; onGround=true; }
 
+
   updateFlip();
 
+
   for (let a of animals) {
-    a.wx += a.dir * a.speed;
-    if (a.wx > a.startWx+a.range || a.wx < a.startWx-a.range) a.dir *= -1;
-    a.ft++; if (a.ft>=8) { a.ft=0; a.frame=(a.frame+1)%2; }
+    if (a.type === 'bear') {
+      let playerWorldX = worldX + charX - width * 0.25;
+      let toPlayer = playerWorldX - a.wx;
+      let attackRange = 100;
+      let targetDir = toPlayer > 0 ? 1 : -1;
+
+
+      if (Math.abs(toPlayer) < attackRange) {
+        a.vx = lerp(a.vx, targetDir * 3.2, 0.16);
+      } else {
+        a.vx = lerp(a.vx, targetDir * 1.4, 0.1);
+      }
+
+
+      a.wx += a.vx;
+      a.dir = targetDir;
+    } else {
+      a.wx += a.dir * a.speed;
+      if (a.wx > a.startWx + a.range || a.wx < a.startWx - a.range) a.dir *= -1;
+    }
+
+
+    a.ft++;
+    if (a.ft >= 8) {
+      a.ft = 0;
+      a.frame = (a.frame + 1) % 2;
+    }
   }
+
 
   if (worldX >= LEVEL_END) {
     gameWon=true;
@@ -231,7 +349,7 @@ function draw() {
   if (levelTimer >= TIME_LIMIT) { gameLost=true; if (sndMusic && sndMusic.isLoaded()) sndMusic.stop(); sndMusic.setVolume(0.01);return; }
   if (invTimer > 0) invTimer--;
   else checkDamage();
-
+ 
   drawBG();
   drawStartSign();
   drawPit();
@@ -243,7 +361,9 @@ function draw() {
   drawFG();
   drawHUD();
   drawFlipHUD();
+  if (debugMode) drawDebugPanel();
 }
+
 
 // ─────────────────────────────────────────────────────────
 function updateFlip() {
@@ -259,6 +379,7 @@ function updateFlip() {
   } else { countdown=0; }
 }
 
+
 // ─────────────────────────────────────────────────────────
 function tileLayer(img, destH, destY, scrollAmt) {
   if (!img) return;
@@ -268,14 +389,16 @@ function tileLayer(img, destH, destY, scrollAmt) {
   for (let i=-1;i<n;i++) image(img,i*tileW-offset,destY,tileW,destH);
 }
 
+
 function drawBG() {
   let bgScroll = min(worldX, LEVEL_END - 800);
   let progress = levelTimer / TIME_LIMIT;
 
+
   let skyTop, skyBot;
   if (progress < 0.35) {
-    let t = progress / 0.35;
-    skyTop = lerpColor(color(118,158,158), color(155,130,100), t);
+    let t = progress / 0.5;
+    skyTop = lerpColor(color(0,0,0), color(155,130,100), t);
     skyBot = lerpColor(color(145,185,180), color(210,175,120), t);
   } else if (progress < 0.65) {
     let t = (progress - 0.35) / 0.30;
@@ -287,9 +410,10 @@ function drawBG() {
     skyBot = lerpColor(color(215,155,130), color(135,115,130), t);
   } else {
     let t = (progress - 0.85) / 0.15;
-    skyTop = lerpColor(color(90,85,110), color(30,28,42), t);
+    skyTop = lerpColor(color(0,0,0), color(30,28,42), t);
     skyBot = lerpColor(color(135,115,130), color(55,48,65), t);
   }
+
 
   noStroke();
   for (let i = 0; i <= height; i++) {
@@ -298,11 +422,13 @@ function drawBG() {
   }
   noStroke();
 
+
   let sunAngle = PI + progress * PI;
   let sunCx    = width*0.5 + cos(sunAngle)*width*0.38;
   let sunCy    = height*0.55 - sin(sunAngle)*height*0.55;
   let sunR     = height*0.055;
   let sunAlpha = progress < 0.8 ? 200 : map(progress, 0.8, 1.0, 200, 60);
+
 
   for (let r = sunR*2.5; r > sunR; r -= sunR*0.3) {
     let a = map(r, sunR, sunR*2.5, sunAlpha*0.5, 0);
@@ -312,13 +438,16 @@ function drawBG() {
   fill(progress < 0.5 ? color(248,228,175,sunAlpha) : progress < 0.8 ? color(235,185,130,sunAlpha) : color(180,165,195,sunAlpha));
   ellipse(sunCx, sunCy, sunR*2, sunR*2);
 
+
   tileLayer(imgBgTrees, height, 0, bgScroll*0.12);
   let bushH = height*0.30;
-  tileLayer(imgBushes, bushH, height-bushH-groundH()*0.50, bgScroll*0.04);
-  tileLayer(imgGround, groundH(), height-groundH(), worldX*0.45);
+  //tileLayer(imgBushes, bushH, height-bushH-groundH()*0.50, bgScroll*0.04);
+  tileLayer(elleground, groundH(), height-groundH(), worldX*0.45);
 }
 
+
 function drawFG() { tileLayer(imgFgTrees, height, 0, worldX*1.15); }
+
 
 // ─────────────────────────────────────────────────────────
 function drawPit() {
@@ -328,11 +457,13 @@ function drawPit() {
   let pitW = pex - psx;
   if (pex < -10 || psx > width+10) return;
 
+
   noStroke(); fill(14,9,6);
   rect(psx, gy, pitW, height-gy);
   fill(38,22,10);
-  rect(psx-6, gy, 10, height*0.14);
-  rect(pex-4, gy, 10, height*0.14);
+  rect(psx-6, gy, 10, height*2);
+  rect(pex-4, gy, 10, height*2);
+
 
   if (imgSpikes) {
     let srcW=1188, srcH=831;
@@ -346,6 +477,7 @@ function drawPit() {
     }
   }
 
+
   noStroke(); fill(155,115,45,180);
   textAlign(CENTER,CENTER); textFont('monospace'); textStyle(BOLD);
   textSize(height*0.020);
@@ -354,9 +486,10 @@ function drawPit() {
   textStyle(NORMAL);
 }
 
+
 // ─────────────────────────────────────────────────────────
 function drawPlatforms() {
-  let srcX2=3, srcY2=148, srcW2=148, srcH2=229;
+  let srcX2=3, srcY2=100, srcW2=148, srcH2=229;
   imageMode(CORNER);
   for (let p of PLATFORMS) {
     let sx=toScreen(p.wx);
@@ -368,11 +501,14 @@ function drawPlatforms() {
   imageMode(CENTER);
 }
 
+
 // ─────────────────────────────────────────────────────────
 function drawObstacles() {
   let gy=groundY();
   let logH=height*0.10, logW=logH*(139/88);
   let rockH=height*0.08, rockW=rockH*(117/66);
+
+
   imageMode(CORNER);
   for (let o of LOGS) {
     let sx=toScreen(o.wx);
@@ -382,9 +518,25 @@ function drawObstacles() {
   for (let o of ROCKS) {
     let sx=toScreen(o.wx);
     if (sx<-200||sx>width+200) continue;
-    image(imgRock,sx,gy-rockH,rockW,rockH,115,56,117,66);
+    image(imgRock,sx,gy-rockH*1.5,rockW*1.5,rockH,115,56,117,66);
   }
+
+
+
+
+
+
+
+
+    //add bears
+
+
 }
+
+
+
+
+
 
 // ─────────────────────────────────────────────────────────
 function drawAnimals() {
@@ -397,6 +549,10 @@ function drawAnimals() {
       let dh=height*0.09, dw=dh*(74/72), srcX=18+a.frame*74;
       if (a.dir<0) { push(); translate(sx+dw,gy-dh); scale(-1,1); image(imgRacoon,0,0,dw,dh,srcX,288,74,72); pop(); }
       else         { image(imgRacoon,sx,gy-dh,dw,dh,srcX,288,74,72); }
+    } else if (a.type==='bear') {
+      let dh=height*0.13, dw=dh*1.05;
+      if (a.dir<0) { push(); translate(sx+dw,gy-dh); scale(-1,1); image(bear,0,0,dw,dh); pop(); }
+      else         { image(bear,sx,gy-dh,dw,dh); }
     } else {
       let dh=height*0.08, dw=dh*(95/80), srcX=a.frame*95;
       if (a.dir<0) { push(); translate(sx+dw,gy-dh); scale(-1,1); image(imgRabbit,0,0,dw,dh,srcX,80,95,80); pop(); }
@@ -404,6 +560,7 @@ function drawAnimals() {
     }
   }
 }
+
 
 // ─────────────────────────────────────────────────────────
 function drawStartSign() {
@@ -415,15 +572,17 @@ function drawStartSign() {
   imageMode(CENTER);
 }
 
+
 // ─────────────────────────────────────────────────────────
 function drawFinishSign() {
-  let sx=toScreen(LEVEL_END-150), gy=groundY();
+  let sx=toScreen(LEVEL_END + 50), gy=groundY();
   if (sx<-300||sx>width+300) return;
   let dh=height*0.28, dw=dh*(300/400);
   imageMode(CORNER);
-  image(imgFinishSign, sx-dw*0.3, gy-dh, dw, dh);
+  image(imgFinishSign, sx-dw*0.3, gy-dh, 300, 300);
   imageMode(CENTER);
 }
+
 
 // ─────────────────────────────────────────────────────────
 function drawChar() {
@@ -437,6 +596,7 @@ function drawChar() {
   pop();
 }
 
+
 // ─────────────────────────────────────────────────────────
 function checkDamage() {
   let gy=groundY();
@@ -445,11 +605,14 @@ function checkDamage() {
   let fallingIn=!onGround&&charY>gy-height*0.10&&velY>2;
   if (inPitX&&fallingIn) { gameLost=true; if (sndMusic && sndMusic.isLoaded()) sndMusic.stop(); return; }
 
+
   if (charY<gy-height*0.05) return;
+
 
   let pw=width*0.010, px1=charX-pw, px2=charX+pw;
   let logH=height*0.10, logW=logH*(139/88);
   let rockH=height*0.08, rockW=rockH*(117/66);
+
 
   for (let o of LOGS) {
     let sx=toScreen(o.wx);
@@ -461,10 +624,20 @@ function checkDamage() {
   }
   for (let a of animals) {
     let sx=toScreen(a.wx);
-    let dw=a.type==='racoon'?height*0.09*(74/72):height*0.08*(95/80);
-    if (px2>sx+12&&px1<sx+dw-12) { takeDamage(); return; }
+    let dw = a.type === 'racoon'
+      ? height * 0.09 * (74 / 72)
+      : a.type === 'bear'
+        ? height * 0.11
+        : height * 0.08 * (95 / 80);
+    if (px2 > sx + 12 && px1 < sx + dw - 12) {
+      if (a.type === 'bear' || a.type === 'racoon' || a.type === 'rabbit') {
+        takeDamage();
+        return;
+      }
+    }
   }
 }
+
 
 function takeDamage() {
   hp--; invTimer=INV_FRAMES;
@@ -472,10 +645,12 @@ function takeDamage() {
   if (hp<=0) { hp=0; gameLost=true; if (sndMusic && sndMusic.isLoaded()) sndMusic.stop(); }
 }
 
+
 // ─────────────────────────────────────────────────────────
 function drawHUD() {
   let pad=width*0.018, hs=height*0.038;
   for (let i=0;i<MAX_HP;i++) drawPixelHeart(pad+i*(hs*1.4), pad, hs, i<hp);
+
 
   let timeLeft=max(0,TIME_LIMIT-levelTimer), pct=timeLeft/TIME_LIMIT;
   let barW=width*0.18, barH=height*0.018;
@@ -491,6 +666,7 @@ function drawHUD() {
   fill(190,215,160); textFont('monospace'); textStyle(BOLD); textSize(height*0.016);
   textAlign(RIGHT,TOP); text('TIME',width-pad,by+barH+3); textStyle(NORMAL);
 
+
   let progress=levelTimer/TIME_LIMIT;
   if (progress>0.82) {
     let a=map(progress,0.82,1.0,0,200);
@@ -501,6 +677,7 @@ function drawHUD() {
     textStyle(NORMAL);
   }
 }
+
 
 function drawPixelHeart(x,y,s,full) {
   let p=s/4;
@@ -518,6 +695,7 @@ function drawPixelHeart(x,y,s,full) {
   }
 }
 
+
 // ─────────────────────────────────────────────────────────
 function drawFlipHUD() {
   if (!flipped && countdown > 0) {
@@ -534,6 +712,7 @@ function drawFlipHUD() {
     fill(190,215,165); text('controls changing',cx,cy+height*0.21);
   }
 
+
   if (flipped) {
     let cx=width/2, ty=height*0.38, msg='controls flipped';
     textFont('Georgia'); textStyle(BOLD); textSize(height*0.040);
@@ -547,6 +726,7 @@ function drawFlipHUD() {
     fill(0,0,0,160); text(msg,cx+2,ty+2);
     fill(210,235,175); text(msg,cx,ty);
     textStyle(NORMAL);
+
 
     let timeLeft=flipTimer;
     if (timeLeft<=180) {
@@ -571,31 +751,101 @@ function drawFlipHUD() {
   }
 }
 
+
+function drawDebugPanel() {
+  fill(0, 0, 0, 200);
+  noStroke();
+  rect(0, height - 80, width, 80);
+
+
+  fill(255, 220, 50);
+  textSize(11);
+  textAlign(LEFT);
+  text("DEBUG MODE (O to close)", 12, height - 62);
+
+
+  let buttons = [
+    { label: "O: Start", x: 10 },
+    { label: "1: Level 1", x: 110 },
+    { label: "2: Level 2", x: 210 },
+    { label: "3: Level 3", x: 310 },
+    { label: "K: Win", x: 410 },
+    { label: "L: Game Over", x: 510 },
+  ];
+
+
+  for (let i = 0; i < buttons.length; i++) {
+    let b = buttons[i];
+
+
+    fill(60, 60, 90);
+    stroke(100, 100, 140);
+    strokeWeight(1);
+    rect(b.x, height - 50, 88, 34, 4);
+
+
+    fill(200);
+    noStroke();
+    textSize(12);
+    textAlign(LEFT);
+    text(b.label, b.x + 8, height - 28);
+  }
+}
 // ─────────────────────────────────────────────────────────
 function drawIntroOverlay() {
   let alpha = introTimer <= INTRO_FADE_FRAMES
     ? constrain(map(introTimer, INTRO_FADE_FRAMES, 0, 220, 0), 0, 220)
     : 220;
 
-  noStroke(); fill(15,22,14,alpha); rect(0,0,width,height);
+
+  imageMode(CORNER);
+  if (title) {
+    image(title, 0, 0, width, height);
+  }
+
+
+  noStroke();
+  fill(15, 22, 14, alpha);
+  rect(0, 0, width, height);
+
+
   if (introTimer > INTRO_FADE_FRAMES) {
     let ta = 255;
-    textAlign(CENTER,CENTER); textFont('Georgia');
-    fill(0,0,0,ta*0.6); textStyle(NORMAL); textSize(height*0.022);
-    text('Tutorial',width/2+2,height/2-height*0.06+2);
-    textStyle(BOLD); textSize(height*0.058);
-    text('Through the Trees',width/2+3,height/2+3);
-    fill(175,210,155,ta); textStyle(NORMAL); textSize(height*0.022);
-    text('Tutorial',width/2,height/2-height*0.06);
-    textStyle(BOLD); textSize(height*0.058); fill(225,240,200,ta);
-    text('Through the Trees',width/2,height/2);
+    textAlign(CENTER, CENTER);
+    textFont('Georgia');
+
+
+    fill(0, 0, 0, ta * 0.6);
+    textStyle(NORMAL);
+    textSize(height * 0.022);
+    text('Tutorial', width / 2 + 2, height / 2 - height * 0.06 + 2);
+    textStyle(BOLD);
+    textSize(height * 0.058);
+    text('Through the Trees', width / 2 + 3, height / 2 + 3);
+
+
+    fill(175, 210, 155, ta);
+    textStyle(NORMAL);
+    textSize(height * 0.022);
+    text('Tutorial', width / 2, height / 2 - height * 0.06);
+    textStyle(BOLD);
+    textSize(height * 0.058);
+    fill(225, 240, 200, ta);
+    text('Through the Trees', width / 2, height / 2);
+
+
     if (introTimer > INTRO_FADE_FRAMES + 20) {
-      fill(150,185,130,ta*0.8); textStyle(NORMAL); textSize(height*0.020);
-      text('use A / D to move    SPACE to jump',width/2,height/2+height*0.08);
+      fill(150, 185, 130, ta * 0.8);
+      textStyle(NORMAL);
+      textSize(height * 0.020);
+      text('use A / D to move    SPACE to jump', width / 2, height / 2 + height * 0.08);
     }
+
+
     textStyle(NORMAL);
   }
 }
+
 
 // ─────────────────────────────────────────────────────────
 function drawLoseScreen() {
@@ -619,6 +869,7 @@ function drawLoseScreen() {
   textStyle(NORMAL);
 }
 
+
 // ─────────────────────────────────────────────────────────
 function drawWinScreen() {
   drawBG(); drawFG();
@@ -637,15 +888,36 @@ function drawWinScreen() {
   if (floor(frameCount/30)%2===0) { textSize(height*0.020); fill(160,110,60); text('press SPACE to play again',width/2,height/2+60); }
 }
 
+
 // ─────────────────────────────────────────────────────────
 function keyPressed() {
   startAudioOnce();
+
+
+  if (key === 'o' || key === 'O') {
+    debugMode = !debugMode;
+    return;
+  }
+
+
+  if (key === 'l' || key === 'L') {
+    gameLost = true;
+    return;
+  }
+
+
+  if (key === 'k' || key === 'K') {
+    gameWon = true;
+    return;
+  }
+
 
   if (introTimer > 0 && !introFadeStarted) {
     introFadeStarted = true;
     introTimer = INTRO_FADE_FRAMES;
     return;
   }
+
 
   if (key===' ' && (gameWon||gameLost)) {
     gameWon=false; gameLost=false;
@@ -659,8 +931,10 @@ function keyPressed() {
   }
 }
 
+
 // Some browsers only count a mouse/touch interaction as the
 // unlocking gesture, not a keypress — cover both.
 function mousePressed() {
   startAudioOnce();
 }
+
