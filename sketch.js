@@ -183,7 +183,7 @@ function preload() {
   imgPlatform2 = loadImage('assets/images/platform2.png');
   imgSpikes    = loadImage('assets/images/spikes.png');
   imgFinishSign= loadImage('assets/images/village.jpg');
-  bear = loadImage('assets/images/bear.jpg');
+  bear = loadImage('assets/images/Bear.png');
 
 
   // NOTE: sounds are deliberately NOT loaded here. p5.sound's preload
@@ -551,8 +551,8 @@ function drawAnimals() {
       else         { image(imgRacoon,sx,gy-dh,dw,dh,srcX,288,74,72); }
     } else if (a.type==='bear') {
       let dh=height*0.13, dw=dh*1.05;
-      if (a.dir<0) { push(); translate(sx+dw,gy-dh); scale(-1,1); image(bear,0,0,dw,dh); pop(); }
-      else         { image(bear,sx,gy-dh,dw,dh); }
+      if (a.dir<0) { push(); translate(sx+dw,gy-dh); scale(-1,1); image(bear,0,0,dw,dh,srcX,288,74,72); pop(); }
+      else         { image(bear,sx,gy-dh,dw,dh,srcX,288,74,72); }
     } else {
       let dh=height*0.08, dw=dh*(95/80), srcX=a.frame*95;
       if (a.dir<0) { push(); translate(sx+dw,gy-dh); scale(-1,1); image(imgRabbit,0,0,dw,dh,srcX,80,95,80); pop(); }
@@ -627,7 +627,7 @@ function checkDamage() {
     let dw = a.type === 'racoon'
       ? height * 0.09 * (74 / 72)
       : a.type === 'bear'
-        ? height * 0.11
+        ? height * 10
         : height * 0.08 * (95 / 80);
     if (px2 > sx + 12 && px1 < sx + dw - 12) {
       if (a.type === 'bear' || a.type === 'racoon' || a.type === 'rabbit') {
