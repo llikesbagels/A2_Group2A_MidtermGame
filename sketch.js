@@ -137,6 +137,9 @@ animals.forEach(a => a.startWx = a.wx);
 
 const PIT_START  = 1500;
 const PIT_END    = 3000;
+const SLOW_PIT_START = 4000;
+const SLOW_PIT_END   = 5000;
+const SLOW_PIT_SPEED_REDUCTION = 3;
 
 let platdistance = 0;
 let platdistanceDir = 1;
@@ -154,13 +157,12 @@ let PLATFORMS = [
   { baseWx: 4500, wx: 5650, wyOff: 0.20, speed: 3, dir: 1, minWx: 1500, maxWx: 2000 }, // platform 1 speed 0.65
   { baseWx: 5920, wx: 5920, wyOff: 0.28, speed: 4, dir: 1, minWx: 1750, maxWx: 2250 }, // platform 2 speed 0.85
   { baseWx: 6480, wx: 6480, wyOff: 0.50, speed: 5, dir: 1, minWx: 2300, maxWx: 2700 }, // platform 4 speed 1.25
-   
-    { baseWx: 7000, wx: 7000, wyOff: 0.50, speed: 6, dir: 1, minWx: 2300, maxWx: 2700 }, // platform 4 speed 1.25
-  { baseWx: 8000, wx: 8000, wyOff: 0.50, speed: 6, dir: 1, minWx: 2300, maxWx: 2700 }, // platform 4 speed 1.25
-  { baseWx: 6480, wx: 6480, wyOff: 0.50, speed: 6, dir: 1, minWx: 2300, maxWx: 2700 }, // platform 4 speed 1.25
+     { baseWx: 6480, wx: 6480, wyOff: 0.50, speed: 4, dir: 1, minWx: 2300, maxWx: 2700 }, // platform 4 speed 1.25
 
-  
-  { baseWx: 6480, wx: 6480, wyOff: 0.50, speed: 6, dir: 1, minWx: 5000, maxWx: 6000 }, // platform 4 speed 1.25
+   
+  { baseWx: 10, wx: 10, wyOff: 0.50, speed: 2, dir: 1, minWx: 4000, maxWx: 5000 }, // platform 4 speed 1.25
+
+  { baseWx: 10, wx: 10, wyOff: 0.50, speed: 6, dir: 1, minWx: 4000, maxWx: 5000 }, // platform 4 speed 1.25
 
 ];
 const PLAT_W = 350;
@@ -274,13 +276,20 @@ function draw() {
 
   let goRight = flipped ? (keyIsDown(65)||keyIsDown(37)) : (keyIsDown(68)||keyIsDown(39));
   charX = width * 0.25;
+  let playerWorldX = worldX + charX;
+  let currentWalkSpeed = WALK_SPEED;
+  let playerOnGround = charY >= 100 - height * 0.05;
+  if (playerWorldX >= SLOW_PIT_START && playerWorldX <= SLOW_PIT_END && playerOnGround) {
+    currentWalkSpeed = max(1, WALK_SPEED - SLOW_PIT_SPEED_REDUCTION);
+  }
+
   if (goLeft)  {
-    worldX = max(0, worldX - WALK_SPEED);
+    worldX = max(0, worldX - currentWalkSpeed);
     facingLeft = true;
     isMoving = true;
   }
   if (goRight) {
-    worldX = min(LEVEL_END, worldX + WALK_SPEED);
+    worldX = min(LEVEL_END, worldX + currentWalkSpeed);
     facingLeft = false;
     isMoving = true;
   }
@@ -410,6 +419,7 @@ function draw() {
   drawBG();
   //drawStartSign();
   drawPit();
+  drawSlowPit();
   drawPlatforms();
   drawObstacles();
   drawAnimals();
@@ -538,6 +548,24 @@ function drawPit() {
 //fish
  
 
+}
+
+
+// ─────────────────────────────────────────────────────────
+function drawSlowPit() {
+  let gy = groundY();
+  let psx = toScreen(SLOW_PIT_START);
+  let pex = toScreen(SLOW_PIT_END);
+  if (pex < -10 || psx > width + 10) return;
+
+  noStroke();
+  fill(60, 100, 210, 120);
+  rect(psx, gy, pex - psx, height * 2);
+
+  fill(255);
+  textAlign(CENTER, CENTER);
+  textSize(height * 0.025);
+  text('SLOW PIT', psx + (pex - psx) / 2, gy + height * 0.06);
 }
 
 
