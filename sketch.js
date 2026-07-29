@@ -49,7 +49,7 @@ function startAudioOnce() {
 
 
 const NUM_FRAMES = 5;
-const ANIM_SPEED = 7;
+const ANIM_SPEED = 8;
 
 
 let charX, charY;
@@ -63,7 +63,7 @@ let isMoving   = false;
 
 const GRAVITY    = 0.65;
 const JUMP_FORCE = -18;
-const WALK_SPEED = 6;
+const WALK_SPEED = 7;
 
 
 let worldX      = 0;
@@ -243,7 +243,7 @@ function draw() {
     drawStartSign();
      drawChar();
      drawFG();
-    // drawIntroOverlay();
+     drawIntroOverlay();
     return;
   }
 
@@ -820,20 +820,8 @@ function drawIntroOverlay() {
     fill(0, 0, 0, ta * 0.6);
     textStyle(NORMAL);
     textSize(height * 0.022);
-    text('Tutorial', width / 2 + 2, height / 2 - height * 0.06 + 2);
-    textStyle(BOLD);
-    textSize(height * 0.058);
-    text('Through the Trees', width / 2 + 3, height / 2 + 3);
-
-
-    fill(175, 210, 155, ta);
-    textStyle(NORMAL);
-    textSize(height * 0.022);
-    text('Tutorial', width / 2, height / 2 - height * 0.06);
-    textStyle(BOLD);
-    textSize(height * 0.058);
-    fill(225, 240, 200, ta);
-    text('Through the Trees', width / 2, height / 2);
+    text('level 3', width / 2 + 2, height / 2 - height * 0.06 + 2);
+    
 
 
     if (introTimer > INTRO_FADE_FRAMES + 20) {
