@@ -104,12 +104,22 @@ const COUNTDOWN_FRAMES = 55;
 const LOGS = [
   { wx: 500 }, // log 1: edit x-position here
   { wx: 3600 }, // log 2: edit x-position here
+  { wx: 7000 }, // log 2: edit x-position here
+
   //{ wx: 4800 }, // removed log before the platform section
 ];
 const ROCKS = [
   { wx: 3000 }, // rock 1: edit x-position here
   { wx: 3500 }, // rock 2: edit x-position here
+  { wx: 6000 }, // rock 3: edit x-position here
+    { wx: 4000 }, // rock 3: edit x-position here
   { wx: 4200 }, // rock 3: edit x-position here
+
+];
+
+const TALLROCKS = [
+  
+  { wx: 6000 }, // rock 3: edit x-position here
 ];
 
 
@@ -117,9 +127,8 @@ let animals = [
   { wx:2600, type:'rabbit', dir: 1, range:110, speed:2.0, frame:0, ft:0, vx:0 },
   { wx:4000, type:'racoon', dir: 1, range: 90, speed:1.5, frame:0, ft:0, vx:0 },
   { wx:1300, type:'bear', dir: 1, range:100, speed:3, frame:0, ft:1, vx:2 },
-  { wx:5000, type:'bear', dir: 1, range:100, speed:3, frame:0, ft:1, vx:2 },
   { wx:0, type:'bear', dir: 1, range:100, speed:5, frame:0, ft:1, vx:2 },
-    { wx:7000, type:'bear', dir: 1, range:100, speed:5, frame:0, ft:1, vx:2 },
+    { wx:8000, type:'bear', dir: 1, range:100, speed:5, frame:0, ft:1, vx:2 },
 
 
 ];
@@ -136,11 +145,15 @@ const PLAT_DISTANCE_MAX = 2250;
 
 
 
+//4000 need to add something here
+
 
 let PLATFORMS = [
-  { baseWx: 5000, wx: 5650, wyOff: 0.20, speed: 2, dir: 1, minWx: 1500, maxWx: 2000 }, // platform 1 speed 0.65
+  { baseWx: 1140, wx: 1140, wyOff: 0.20, speed: 0, dir: 1, minWx: 1140, maxWx: 1140 }, // static platform before blue pit
+
+  { baseWx: 4500, wx: 5650, wyOff: 0.20, speed: 3, dir: 1, minWx: 1500, maxWx: 2000 }, // platform 1 speed 0.65
   { baseWx: 5920, wx: 5920, wyOff: 0.28, speed: 4, dir: 1, minWx: 1750, maxWx: 2250 }, // platform 2 speed 0.85
-  { baseWx: 6480, wx: 6480, wyOff: 0.50, speed: 6, dir: 1, minWx: 2300, maxWx: 2700 }, // platform 4 speed 1.25
+  { baseWx: 6480, wx: 6480, wyOff: 0.50, speed: 5, dir: 1, minWx: 2300, maxWx: 2700 }, // platform 4 speed 1.25
    
     { baseWx: 7000, wx: 7000, wyOff: 0.50, speed: 6, dir: 1, minWx: 2300, maxWx: 2700 }, // platform 4 speed 1.25
   { baseWx: 8000, wx: 8000, wyOff: 0.50, speed: 6, dir: 1, minWx: 2300, maxWx: 2700 }, // platform 4 speed 1.25
@@ -150,7 +163,7 @@ let PLATFORMS = [
   { baseWx: 6480, wx: 6480, wyOff: 0.50, speed: 6, dir: 1, minWx: 5000, maxWx: 6000 }, // platform 4 speed 1.25
 
 ];
-const PLAT_W = 300;
+const PLAT_W = 350;
 const PLAT_H = 10;
 
 function updatePlatDistance() {
@@ -200,6 +213,7 @@ function preload() {
   imgFinishSign= loadImage('assets/images/village.jpg');
   bear = loadImage('assets/images/Beardouble.png');
   wall = loadImage('assets/images/IMG_5152.PNG');
+  tallrock = loadImage('assets/images/tallrock.png');
 
 
   // NOTE: sounds are deliberately NOT loaded here. p5.sound's preload
@@ -355,6 +369,12 @@ function draw() {
         if (sxNew + bearScreenW*0.5 > osx + 12 && sxNew - bearScreenW*0.5 < osx + rockW - 12) { blocked = true; break; }
       }
 
+      if (!blocked) for (let o of TALLROCKS) {
+        let osx = toScreen(o.wx);
+        let tallRockW = rockW * 3;
+        if (sxNew + bearScreenW*0.5 > osx + 12 && sxNew - bearScreenW*0.5 < osx + tallRockW - 12) { blocked = true; break; }
+      }
+
       if (blocked) {
         // reverse direction so bears don't cross obstacles / pit
         a.vx = -a.vx; a.dir = a.vx >= 0 ? 1 : -1;
@@ -398,22 +418,35 @@ function draw() {
   drawFG();
   drawHUD();
   drawFlipHUD();
+  
   if (debugMode) drawDebugPanel();
+
+  fill('brown');
+  rect(7000,gy,1000,height*2);
 }
 
 
 // ─────────────────────────────────────────────────────────
 function updateFlip() {
   if (flipped) { flipTimer--; if (flipTimer<=0) flipped=false; return; }
+  if (countdownTimer > 0) {
+    countdownTimer--;
+    countdown = ceil(countdownTimer / COUNTDOWN_FRAMES);
+    if (countdownTimer <= 0) {
+      flipped = true;
+      flipTimer = FLIP_DURATION;
+      countdown = 0;
+      countdownTimer = 0;
+      flipIndex++;
+    }
+    return;
+  }
   if (flipIndex >= FLIP_AT.length) return;
-  let trigger   = FLIP_AT[flipIndex];
-  let warnStart = trigger - WALK_SPEED * COUNTDOWN_FRAMES * 3;
-  if (worldX >= trigger) { flipped=true; flipTimer=FLIP_DURATION; countdown=0; flipIndex++; return; }
-  if (worldX >= warnStart) {
-    let elapsed = worldX - warnStart;
-    let step    = WALK_SPEED * COUNTDOWN_FRAMES;
-    countdown = elapsed < step ? 3 : elapsed < step*2 ? 2 : 1;
-  } else { countdown=0; }
+  let trigger = FLIP_AT[flipIndex];
+  if (worldX >= trigger) {
+    countdownTimer = COUNTDOWN_FRAMES * 3;
+    countdown = 3;
+  }
 }
 
 
@@ -498,28 +531,13 @@ function drawPit() {
   image(wall,psx, 0, pitW, 600);
 
   fill('blue');
-  rect(psx-6, gy, 1000, height*2);
+  rect(psx-6, gy, 1500, height*2);
 
+  fill('brown');
+  rect(psx+ 4000,gy,1000,height*2);
 //fish
-  if (imgSpikes) {
-    let srcW=1188, srcH=831;
-    let spikeH=height*0.18, spikeW=spikeH*(srcW/srcH);
-    let n=ceil(pitW/spikeW)+1;
-    imageMode(CORNER);
-    for (let i=0;i<n;i++) {
-      let dx=psx+i*spikeW;
-      if (dx>pex) break;
-      image(imgSpikes,dx,gy,spikeW,spikeH,165,168,srcW,srcH);
-    }
-  }
+ 
 
-
-  noStroke(); fill(155,115,45,180);
-  textAlign(CENTER,CENTER); textFont('monospace'); textStyle(BOLD);
-  textSize(height*0.020);
-  text('!', psx-25, groundY()-height*0.06);
-  text('!', psx-48, groundY()-height*0.06);
-  textStyle(NORMAL);
 }
 
 
@@ -555,6 +573,13 @@ function drawObstacles() {
     let sx=toScreen(o.wx);
     if (sx<-200||sx>width+200) continue;
     image(imgRock,sx,gy-rockH*1.5,rockW*1.5,rockH,115,56,117,66);
+  }
+
+   for (let o of TALLROCKS) {
+    let sx=toScreen(o.wx);
+    if (sx<-200||sx>width+200) continue;
+    let tallRockW = rockW * 5;
+    image(tallrock, sx, 0, tallRockW, height, 400, 56, 500, 500);
   }
 
 }
