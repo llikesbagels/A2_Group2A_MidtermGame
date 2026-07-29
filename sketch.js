@@ -63,7 +63,7 @@ let isMoving   = false;
 
 const GRAVITY    = 0.65;
 const JUMP_FORCE = -18;
-const WALK_SPEED = 4;
+const WALK_SPEED = 6;
 
 
 let worldX      = 0;
@@ -101,50 +101,58 @@ let   countdownTimer = 0;
 const COUNTDOWN_FRAMES = 55;
 
 
-const LOGS  = [{ wx:2200 }, { wx:3600 }, { wx:4800 }];
-const ROCKS = [{ wx:1500 }, { wx:2900 }, { wx:4200 }];
+const LOGS = [
+  { wx: 500 }, // log 1: edit x-position here
+  { wx: 3600 }, // log 2: edit x-position here
+  //{ wx: 4800 }, // removed log before the platform section
+];
+const ROCKS = [
+  { wx: 3000 }, // rock 1: edit x-position here
+  { wx: 3500 }, // rock 2: edit x-position here
+  { wx: 4200 }, // rock 3: edit x-position here
+];
 
 
 let animals = [
   { wx:2600, type:'rabbit', dir: 1, range:110, speed:2.0, frame:0, ft:0, vx:0 },
   { wx:4000, type:'racoon', dir: 1, range: 90, speed:1.5, frame:0, ft:0, vx:0 },
-  { wx:10000, type:'bear', dir: -1, range:220, speed:5, frame:0, ft:0, vx:2 },
+  { wx:1300, type:'bear', dir: 1, range:100, speed:3, frame:0, ft:1, vx:2 },
+  { wx:5000, type:'bear', dir: 1, range:100, speed:3, frame:0, ft:1, vx:2 },
+  { wx:0, type:'bear', dir: 1, range:100, speed:5, frame:0, ft:1, vx:2 },
+    { wx:7000, type:'bear', dir: 1, range:100, speed:5, frame:0, ft:1, vx:2 },
+
+
 ];
 animals.forEach(a => a.startWx = a.wx);
 
 
-const PIT_START  = 5000;
-const PIT_END    = 6000;
+const PIT_START  = 1500;
+const PIT_END    = 3000;
 
 let platdistance = 0;
 let platdistanceDir = 1;
-const PLAT_DISTANCE_MIN = 5000 - 5650;
-const PLAT_DISTANCE_MAX = 6000 - 5650;
+const PLAT_DISTANCE_MIN = 1500;
+const PLAT_DISTANCE_MAX = 2250;
 
 
 
 
 let PLATFORMS = [
-  { baseWx: 5650, wx: 5650, wyOff: 0.20 },
-  { baseWx: 5920, wx: 5920, wyOff: 0.28 },
-  { baseWx: 6200, wx: 6200, wyOff: 0.40 },
-  { baseWx: 6480, wx: 6480, wyOff: 0.50 },
+  { baseWx: 5000, wx: 5650, wyOff: 0.20, speed: 2, dir: 1, minWx: 1500, maxWx: 2000 }, // platform 1 speed 0.65
+  { baseWx: 5920, wx: 5920, wyOff: 0.28, speed: 4, dir: 1, minWx: 1750, maxWx: 2250 }, // platform 2 speed 0.85
+  { baseWx: 6200, wx: 6200, wyOff: 0.40, speed: 1.05, dir: 1, minWx: 2000, maxWx: 2400 }, // platform 3 speed 1.05
+  { baseWx: 6480, wx: 6480, wyOff: 0.50, speed: 6, dir: 1, minWx: 2300, maxWx: 2700 }, // platform 4 speed 1.25
 ];
 const PLAT_W = 300;
 const PLAT_H = 28;
 
 function updatePlatDistance() {
-  platdistance += platdistanceDir;
-  if (platdistance >= PLAT_DISTANCE_MAX) {
-    platdistance = PLAT_DISTANCE_MAX;
-    platdistanceDir = -1;
-  } else if (platdistance <= PLAT_DISTANCE_MIN) {
-    platdistance = PLAT_DISTANCE_MIN;
-    platdistanceDir = 1;
-  }
-
   for (let p of PLATFORMS) {
-    p.wx = p.baseWx + platdistance;
+    p.wx += p.speed * p.dir;
+    if (p.wx <= p.minWx || p.wx >= p.maxWx) {
+      p.dir *= -1;
+      p.wx = constrain(p.wx, p.minWx, p.maxWx);
+    }
   }
 }
 
@@ -179,11 +187,12 @@ function preload() {
   imgRacoon    = loadImage('assets/images/racoon.png');
   imgRabbit    = loadImage('assets/images/rabbit.png');
   imgSign      = loadImage('assets/images/sign.png');
-  imgPlatform  = loadImage('assets/images/platform.png');
-  imgPlatform2 = loadImage('assets/images/platform2.png');
+  imgPlatform  = loadImage('assets/images/Plat.png');
+  imgPlatform2 = loadImage('assets/images/Plat.png');
   imgSpikes    = loadImage('assets/images/spikes.png');
   imgFinishSign= loadImage('assets/images/village.jpg');
-  bear = loadImage('assets/images/Bear.png');
+  bear = loadImage('assets/images/Beardouble.png');
+  wall = loadImage('assets/images/IMG_5152.PNG');
 
 
   // NOTE: sounds are deliberately NOT loaded here. p5.sound's preload
@@ -230,7 +239,7 @@ function draw() {
     drawStartSign();
      drawChar();
      drawFG();
-     drawIntroOverlay();
+    // drawIntroOverlay();
     return;
   }
 
@@ -310,21 +319,14 @@ function draw() {
 
   for (let a of animals) {
     if (a.type === 'bear') {
-      let playerWorldX = worldX + charX - width * 0.25;
+      let playerWorldX = worldX + charX;
       let toPlayer = playerWorldX - a.wx;
-      let attackRange = 100;
-      let targetDir = toPlayer > 0 ? 1 : -1;
+      let attackRange = 80;
+      let desiredSpeed = Math.sign(toPlayer) * (Math.abs(toPlayer) < attackRange ? 3 : 1.5);
 
-
-      if (Math.abs(toPlayer) < attackRange) {
-        a.vx = lerp(a.vx, targetDir * 3.2, 0.16);
-      } else {
-        a.vx = lerp(a.vx, targetDir * 1.4, 0.1);
-      }
-
-
+      a.vx = lerp(a.vx, desiredSpeed, 0.12);
       a.wx += a.vx;
-      a.dir = targetDir;
+      a.dir = a.vx >= 0 ? 1 : -1;
     } else {
       a.wx += a.dir * a.speed;
       if (a.wx > a.startWx + a.range || a.wx < a.startWx - a.range) a.dir *= -1;
@@ -451,20 +453,19 @@ function drawFG() { tileLayer(imgFgTrees, height, 0, worldX*1.15); }
 
 // ─────────────────────────────────────────────────────────
 function drawPit() {
+  
   let gy  = groundY();
   let psx = toScreen(PIT_START);
   let pex = toScreen(PIT_END);
   let pitW = pex - psx;
   if (pex < -10 || psx > width+10) return;
 
+  image(wall,psx, 0, pitW, 600);
 
-  noStroke(); fill(14,9,6);
-  rect(psx, gy, pitW, height-gy);
-  fill(38,22,10);
-  rect(psx-6, gy, 10, height*2);
-  rect(pex-4, gy, 10, height*2);
+  fill('blue');
+  rect(psx-6, gy, 1000, height*2);
 
-
+//fish
   if (imgSpikes) {
     let srcW=1188, srcH=831;
     let spikeH=height*0.18, spikeW=spikeH*(srcW/srcH);
@@ -496,7 +497,7 @@ function drawPlatforms() {
     let py=platY(p);
     if (sx < -PLAT_W-20 || sx > width+20) continue;
     let ih=groundY()-py+PLAT_H;
-    image(imgPlatform2, sx, py, PLAT_W, ih, srcX2, srcY2, srcW2, srcH2);
+    image(imgPlatform, sx, py, PLAT_W, ih, srcX2, srcY2, srcW2, srcH2);
   }
   imageMode(CENTER);
 }
@@ -505,7 +506,7 @@ function drawPlatforms() {
 // ─────────────────────────────────────────────────────────
 function drawObstacles() {
   let gy=groundY();
-  let logH=height*0.10, logW=logH*(139/88);
+  let logH=height*0.20, logW=logH*(139/88);
   let rockH=height*0.08, rockW=rockH*(117/66);
 
 
@@ -520,16 +521,6 @@ function drawObstacles() {
     if (sx<-200||sx>width+200) continue;
     image(imgRock,sx,gy-rockH*1.5,rockW*1.5,rockH,115,56,117,66);
   }
-
-
-
-
-
-
-
-
-    //add bears
-
 
 }
 
@@ -550,9 +541,16 @@ function drawAnimals() {
       if (a.dir<0) { push(); translate(sx+dw,gy-dh); scale(-1,1); image(imgRacoon,0,0,dw,dh,srcX,288,74,72); pop(); }
       else         { image(imgRacoon,sx,gy-dh,dw,dh,srcX,288,74,72); }
     } else if (a.type==='bear') {
-      let dh=height*0.13, dw=dh*1.05;
-      if (a.dir<0) { push(); translate(sx+dw,gy-dh); scale(-1,1); image(bear,0,0,dw,dh,srcX,288,74,72); pop(); }
-      else         { image(bear,sx,gy-dh,dw,dh,srcX,288,74,72); }
+      if (bear) {
+        let dh = height * 0.13;
+        let dw = dh * 1.05;
+        let frames = 4;
+        let srcW = bear.width / frames;
+        let srcH = bear.height;
+        let frameIndex = a.dir < 0 ? a.frame : 2 + a.frame;
+        let srcX = frameIndex * srcW;
+        image(bear, sx, gy - dh, dw, dh, srcX, 0, srcW, srcH);
+      }
     } else {
       let dh=height*0.08, dw=dh*(95/80), srcX=a.frame*95;
       if (a.dir<0) { push(); translate(sx+dw,gy-dh); scale(-1,1); image(imgRabbit,0,0,dw,dh,srcX,80,95,80); pop(); }
@@ -627,7 +625,7 @@ function checkDamage() {
     let dw = a.type === 'racoon'
       ? height * 0.09 * (74 / 72)
       : a.type === 'bear'
-        ? height * 10
+        ? height * 0.13
         : height * 0.08 * (95 / 80);
     if (px2 > sx + 12 && px1 < sx + dw - 12) {
       if (a.type === 'bear' || a.type === 'racoon' || a.type === 'rabbit') {
