@@ -140,11 +140,15 @@ const PLAT_DISTANCE_MAX = 2250;
 let PLATFORMS = [
   { baseWx: 5000, wx: 5650, wyOff: 0.20, speed: 2, dir: 1, minWx: 1500, maxWx: 2000 }, // platform 1 speed 0.65
   { baseWx: 5920, wx: 5920, wyOff: 0.28, speed: 4, dir: 1, minWx: 1750, maxWx: 2250 }, // platform 2 speed 0.85
-  { baseWx: 6200, wx: 6200, wyOff: 0.40, speed: 1.05, dir: 1, minWx: 2000, maxWx: 2400 }, // platform 3 speed 1.05
   { baseWx: 6480, wx: 6480, wyOff: 0.50, speed: 6, dir: 1, minWx: 2300, maxWx: 2700 }, // platform 4 speed 1.25
+   
+  
+  
+  { baseWx: 6480, wx: 6480, wyOff: 0.50, speed: 6, dir: 1, minWx: 5000, maxWx: 6000 }, // platform 4 speed 1.25
+
 ];
 const PLAT_W = 300;
-const PLAT_H = 28;
+const PLAT_H = 10;
 
 function updatePlatDistance() {
   for (let p of PLATFORMS) {
