@@ -214,7 +214,7 @@ function preload() {
   imgSpikes    = loadImage('assets/images/spikes.png');
   imgFinishSign= loadImage('assets/images/village.jpg');
   bear = loadImage('assets/images/Beardouble.png');
-  wall = loadImage('assets/images/IMG_5152.PNG');
+  wall = loadImage('assets/images/stonewalled.png');
   tallrock = loadImage('assets/images/tallrock.png');
 
 
