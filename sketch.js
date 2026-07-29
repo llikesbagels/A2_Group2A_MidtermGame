@@ -85,7 +85,7 @@ let levelTimer      = 0;
 const TIME_LIMIT    = 90 * 60;
 
 
-const INTRO_DISPLAY_FRAMES = 10 * 60;
+const INTRO_DISPLAY_FRAMES = 10;
 const INTRO_FADE_FRAMES = 60;
 let introTimer = INTRO_DISPLAY_FRAMES + INTRO_FADE_FRAMES;
 let introFadeStarted = false;
@@ -142,7 +142,10 @@ let PLATFORMS = [
   { baseWx: 5920, wx: 5920, wyOff: 0.28, speed: 4, dir: 1, minWx: 1750, maxWx: 2250 }, // platform 2 speed 0.85
   { baseWx: 6480, wx: 6480, wyOff: 0.50, speed: 6, dir: 1, minWx: 2300, maxWx: 2700 }, // platform 4 speed 1.25
    
-  
+    { baseWx: 7000, wx: 7000, wyOff: 0.50, speed: 6, dir: 1, minWx: 2300, maxWx: 2700 }, // platform 4 speed 1.25
+  { baseWx: 8000, wx: 8000, wyOff: 0.50, speed: 6, dir: 1, minWx: 2300, maxWx: 2700 }, // platform 4 speed 1.25
+  { baseWx: 6480, wx: 6480, wyOff: 0.50, speed: 6, dir: 1, minWx: 2300, maxWx: 2700 }, // platform 4 speed 1.25
+
   
   { baseWx: 6480, wx: 6480, wyOff: 0.50, speed: 6, dir: 1, minWx: 5000, maxWx: 6000 }, // platform 4 speed 1.25
 
@@ -184,7 +187,7 @@ function preload() {
   elleground   = loadImage('assets/images/Stone.png');
 
 
-  imgFgTrees   = loadImage('assets/images/Asset8.png');
+  imgFgTrees   = loadImage('assets/images/Caving.png');
   imgSprites   = loadImage('assets/images/sprites2.png');
   imgLog       = loadImage('assets/images/log.png');
   imgRock      = loadImage('assets/images/rock.png');
@@ -329,8 +332,36 @@ function draw() {
       let desiredSpeed = Math.sign(toPlayer) * (Math.abs(toPlayer) < attackRange ? 3 : 1.5);
 
       a.vx = lerp(a.vx, desiredSpeed, 0.12);
-      a.wx += a.vx;
-      a.dir = a.vx >= 0 ? 1 : -1;
+      let newWx = a.wx + a.vx;
+
+      // compute screen width for the bear (same as used for drawing/collision)
+      let bearScreenW = height * 0.13 * 2 * 1.05;
+      let sxNew = toScreen(newWx);
+
+      // check for pit / blue rectangle
+      let blocked = false;
+      if (newWx > PIT_START && newWx < PIT_END) blocked = true;
+
+      // check LOGS
+      let logH = height * 0.20, logW = logH * (139/88);
+      for (let o of LOGS) {
+        let osx = toScreen(o.wx);
+        if (sxNew + bearScreenW*0.5 > osx + 12 && sxNew - bearScreenW*0.5 < osx + logW - 12) { blocked = true; break; }
+      }
+      // check ROCKS
+      let rockH = height * 0.08, rockW = rockH * (117/66);
+      if (!blocked) for (let o of ROCKS) {
+        let osx = toScreen(o.wx);
+        if (sxNew + bearScreenW*0.5 > osx + 12 && sxNew - bearScreenW*0.5 < osx + rockW - 12) { blocked = true; break; }
+      }
+
+      if (blocked) {
+        // reverse direction so bears don't cross obstacles / pit
+        a.vx = -a.vx; a.dir = a.vx >= 0 ? 1 : -1;
+      } else {
+        a.wx = newWx;
+        a.dir = a.vx >= 0 ? 1 : -1;
+      }
     } else {
       a.wx += a.dir * a.speed;
       if (a.wx > a.startWx + a.range || a.wx < a.startWx - a.range) a.dir *= -1;
@@ -357,7 +388,7 @@ function draw() {
   else checkDamage();
  
   drawBG();
-  drawStartSign();
+  //drawStartSign();
   drawPit();
   drawPlatforms();
   drawObstacles();
@@ -546,14 +577,14 @@ function drawAnimals() {
       else         { image(imgRacoon,sx,gy-dh,dw,dh,srcX,288,74,72); }
     } else if (a.type==='bear') {
       if (bear) {
-        let dh = height * 0.13;
+        let dh = height * 0.13 * 3; // doubled size
         let dw = dh * 1.05;
         let frames = 4;
         let srcW = bear.width / frames;
         let srcH = bear.height;
         let frameIndex = a.dir < 0 ? a.frame : 2 + a.frame;
         let srcX = frameIndex * srcW;
-        image(bear, sx, gy - dh, dw, dh, srcX, 0, srcW, srcH);
+        image(bear, sx, gy - dh + 60, dw, dh, srcX, 0, srcW, srcH);
       }
     } else {
       let dh=height*0.08, dw=dh*(95/80), srcX=a.frame*95;
@@ -570,7 +601,7 @@ function drawStartSign() {
   if (sx<-300||sx>width+300) return;
   let dh=height*0.28, dw=dh*(197/268);
   imageMode(CORNER);
-  image(imgSign, sx-dw*0.3, gy-dh, dw, dh, 47, 71, 197, 268);
+  image(imgSign, sx-dw*0.3 + 1100, gy-dh, dw, dh, 47, 71, 197, 268);
   imageMode(CENTER);
 }
 
@@ -602,10 +633,13 @@ function drawChar() {
 // ─────────────────────────────────────────────────────────
 function checkDamage() {
   let gy=groundY();
-  let worldPlayerX=worldX;
-  let inPitX=worldPlayerX+width*0.25>PIT_START+60&&worldPlayerX+width*0.25<PIT_END-60;
-  let fallingIn=!onGround&&charY>gy-height*0.10&&velY>2;
-  if (inPitX&&fallingIn) { gameLost=true; if (sndMusic && sndMusic.isLoaded()) sndMusic.stop(); return; }
+  let worldPlayerX = worldX + charX;
+  // immediate death if player is over the blue pit area and at/near ground level
+  let playerInPit = worldPlayerX > PIT_START && worldPlayerX < PIT_END;
+  if (playerInPit && charY >= gy - height*0.05) { gameLost=true; if (sndMusic && sndMusic.isLoaded()) sndMusic.stop(); return; }
+  // also keep falling-into-pit detection
+  let fallingIn = !onGround && charY > gy - height*0.10 && velY > 2;
+  if (playerInPit && fallingIn) { gameLost=true; if (sndMusic && sndMusic.isLoaded()) sndMusic.stop(); return; }
 
 
   if (charY<gy-height*0.05) return;
@@ -629,7 +663,7 @@ function checkDamage() {
     let dw = a.type === 'racoon'
       ? height * 0.09 * (74 / 72)
       : a.type === 'bear'
-        ? height * 0.13
+        ? height * 0.13 * 2 * 1.05 // bear is drawn twice as big; match draw size
         : height * 0.08 * (95 / 80);
     if (px2 > sx + 12 && px1 < sx + dw - 12) {
       if (a.type === 'bear' || a.type === 'racoon' || a.type === 'rabbit') {
@@ -845,6 +879,7 @@ function drawLoseScreen() {
   rectMode(CENTER); rect(width/2,height/2,min(width*0.5,560),210,10); rectMode(CORNER);
   stroke(60,90,45,140); strokeWeight(1); noFill();
   rectMode(CENTER); rect(width/2,height/2,min(width*0.5,560)-12,198,8); rectMode(CORNER);
+
   let cx=width/2, cy=height/2;
   noStroke(); fill(0,0,0,160);
   textAlign(CENTER,CENTER); textFont('Georgia'); textStyle(BOLD); textSize(height*0.052);
@@ -853,7 +888,8 @@ function drawLoseScreen() {
   textStyle(NORMAL); textSize(height*0.022); fill(140,168,115);
   text('she never made it home.',cx,cy+2);
   textSize(height*0.018); fill(100,130,80);
-  let reason=levelTimer>=TIME_LIMIT?'the forest swallowed the last of the light.':'the cold crept in.';
+
+  let reason=levelTimer>=TIME_LIMIT?'the forest swallowed the last of the light.':'the cold crept in. try again';
   text(reason,cx,cy+30);
   if (floor(frameCount/30)%2===0) { textSize(height*0.019); fill(160,190,130); text('press SPACE to try again',cx,cy+68); }
   textStyle(NORMAL);
