@@ -67,7 +67,7 @@ const WALK_SPEED = 7;
 
 
 let worldX      = 0;
-const LEVEL_END = 8500;
+const LEVEL_END = 9000;
 let gameWon     = false;
 let gameLost    = false;
 
@@ -196,16 +196,16 @@ function preload() {
       err => { console.error('failed to load', name, path, err); }
     );
   }
-  imgBgTrees   = loadImage('assets/images/Stone2.png');
+  imgBgTrees   = loadImage('assets/images/Background.png');
   //imgBushes    = loadImage('assets/images/Asset9.png');
   title        = loadImage('assets/images/title.PNG');
-  elleground   = loadImage('assets/images/Stone.png');
+  elleground   = loadImage('assets/images/Redux2.png');
 
 
-  imgFgTrees   = loadImage('assets/images/Caving.png');
+  imgFgTrees   = loadImage('assets/images/Foreground.png');
   imgSprites   = loadImage('assets/images/sprites2.png');
-  imgLog       = loadImage('assets/images/log.png');
-  imgRock      = loadImage('assets/images/rock.png');
+  imgLog       = loadImage('assets/images/AMber.png');
+  imgRock      = loadImage('assets/images/Rocksharp.png');
   imgRacoon    = loadImage('assets/images/racoon.png');
   imgRabbit    = loadImage('assets/images/rabbit.png');
   imgSign      = loadImage('assets/images/sign.png');
@@ -213,9 +213,10 @@ function preload() {
   imgPlatform2 = loadImage('assets/images/Plat.png');
   imgSpikes    = loadImage('assets/images/spikes.png');
   imgFinishSign= loadImage('assets/images/village.jpg');
-  bear = loadImage('assets/images/Beardouble.png');
+  bear = loadImage('assets/images/Beardouble3.png');
   wall = loadImage('assets/images/stonewalled.png');
   tallrock = loadImage('assets/images/tallrock.png');
+  water = loadImage('assets/images/water.png');
 
 
   // NOTE: sounds are deliberately NOT loaded here. p5.sound's preload
@@ -363,13 +364,13 @@ function draw() {
 
       // check for pit / blue rectangle
       let blocked = false;
-      if (newWx > PIT_START && newWx < PIT_END) blocked = true;
+      if (newWx > PIT_START - (bearScreenW * 1.2) && newWx < PIT_END) blocked = true;
 
       // check LOGS
       let logH = height * 0.20, logW = logH * (139/88);
       for (let o of LOGS) {
         let osx = toScreen(o.wx);
-        if (sxNew + bearScreenW*0.5 > osx + 12 && sxNew - bearScreenW*0.5 < osx + logW - 12) { blocked = true; break; }
+        if (sxNew + bearScreenW*0.5 > osx - 120 && sxNew - bearScreenW*0.5 < osx + logW - 12) { blocked = true; break; }
       }
       // check ROCKS
       let rockH = height * 0.08, rockW = rockH * (117/66);
@@ -538,13 +539,10 @@ function drawPit() {
   let pitW = pex - psx;
   if (pex < -10 || psx > width+10) return;
 
-  image(wall,psx, 0, pitW, 600);
+  image(wall,psx - 20, 0, pitW + 20, 600);
 
-  fill('blue');
-  rect(psx-6, gy, 1500, height*2);
-
-  fill('brown');
-  rect(psx+ 4000,gy,1000,height*2);
+  image(water, psx, gy - 20, pitW, 200);
+  
 //fish
  
 
@@ -595,12 +593,12 @@ function drawObstacles() {
   for (let o of LOGS) {
     let sx=toScreen(o.wx);
     if (sx<-200||sx>width+200) continue;
-    image(imgLog,sx,gy-logH,logW,logH,258,46,139,88);
+    image(imgLog, sx, gy - logH + 4, logW, logH);
   }
   for (let o of ROCKS) {
     let sx=toScreen(o.wx);
     if (sx<-200||sx>width+200) continue;
-    image(imgRock,sx,gy-rockH*1.5,rockW*1.5,rockH,115,56,117,66);
+    image(imgRock, sx - 10, gy - rockH * 2 , rockW * 1.5, rockH * 2);
   }
 
    for (let o of TALLROCKS) {
@@ -633,10 +631,10 @@ function drawAnimals() {
         let dh = height * 0.13 * 3; // doubled size
         let dw = dh * 1.05;
         let frames = 4;
-        let srcW = bear.width / frames;
+        let srcW = (bear.width + 50 ) / frames ;
         let srcH = bear.height;
         let frameIndex = a.dir < 0 ? a.frame : 2 + a.frame;
-        let srcX = frameIndex * srcW;
+        let srcX = frameIndex * srcW + 10;
         image(bear, sx, gy - dh + 60, dw, dh, srcX, 0, srcW, srcH);
       }
     } else {
@@ -665,7 +663,7 @@ function drawFinishSign() {
   if (sx<-300||sx>width+300) return;
   let dh=height*0.28, dw=dh*(300/400);
   imageMode(CORNER);
-  image(imgFinishSign, sx-dw*0.3, gy-dh, 300, 300);
+  image(imgFinishSign, sx-dw*0.3,0, 600, 600);
   imageMode(CENTER);
 }
 
@@ -817,6 +815,7 @@ function drawFlipHUD() {
     textStyle(NORMAL);
 
 
+    // fucking claude how the hell am i suppose to edit any of this shit if this is a complete mess, im gonna fucking kill myself copilot work you [oece of horseball]
     let timeLeft=flipTimer;
     if (timeLeft<=180) {
       let endMsg=timeLeft<=60?'1':timeLeft<=120?'2':'3';
@@ -826,6 +825,7 @@ function drawFlipHUD() {
       let wx2=cx-ww/2, wy=ty+ph/2+12;
       noStroke(); fill(0,0,0,80); rect(wx2+2,wy+2,ww,wh,wh/2);
       fill(80,55,28,warningAlpha); rect(wx2,wy,ww,wh,wh/2);
+
       stroke(180,140,60,warningAlpha); strokeWeight(1); noFill();
       rect(wx2+2,wy+2,ww-4,wh-4,wh/2); noStroke();
       textAlign(CENTER,CENTER); fill(235,200,130,warningAlpha);
