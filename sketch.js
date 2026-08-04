@@ -87,6 +87,7 @@ let introTimer = INTRO_DISPLAY_FRAMES + INTRO_FADE_FRAMES;
 let introFadeStarted = false;
 
 
+
 const FLIP_AT       = [700, 5200];
 let   flipIndex     = 0;
 let   flipped       = false;
@@ -126,7 +127,8 @@ let animals = [
   { wx:1300, type:'bear', dir: 1, range:100, speed:3, frame:0, ft:1, vx:2 },
   { wx:0, type:'bear', dir: 1, range:100, speed:5, frame:0, ft:1, vx:2 },
     { wx:8000, type:'bear', dir: 1, range:100, speed:7.5, frame:0, ft:1, vx:2 },
-    { wx:9000, type:'bear', dir: 1, range:100, speed:5, frame:0, ft:1, vx:2 },
+    { wx:7500, type:'bear', dir: 1, range:100, speed:5, frame:0, ft:1, vx:2 },
+    { wx:7600, type:'bear', dir: 1, range:100, speed:5, frame:0, ft:1, vx:2 },
 
 
 ];
@@ -906,21 +908,20 @@ function drawIntroOverlay() {
   if (introTimer > INTRO_FADE_FRAMES) {
     let ta = 255;
     textAlign(CENTER, CENTER);
-    textFont('Georgia');
+    textFont('Trebuchet MS Bold');
 
 
     fill(0, 0, 0, ta * 0.6);
     textStyle(NORMAL);
     textSize(height * 0.022);
-    text('level 3', width / 2 + 2, height / 2 - height * 0.06 + 2);
     
 
 
-    if (introTimer > INTRO_FADE_FRAMES + 20) {
+    if (introTimer  > INTRO_FADE_FRAMES ) {
       fill(150, 185, 130, ta * 0.8);
       textStyle(NORMAL);
-      textSize(height * 0.020);
-      text('use A / D to move    SPACE to jump', width / 2, height / 2 + height * 0.08);
+      textSize(height * 0.5);
+    text('Level 3', width / 2 + 2, height / 2 - height * 0.06 + 2);
     }
 
 
@@ -941,13 +942,13 @@ function drawLoseScreen() {
   let cx=width/2, cy=height/2;
   noStroke(); fill(0,0,0,160);
   textAlign(CENTER,CENTER); textFont('Georgia'); textStyle(BOLD); textSize(height*0.052);
-  text('lost in the forest',cx+2,cy-50+2);
-  fill(195,215,165); text('lost in the forest',cx,cy-50);
+  text('Lost in the cave',cx+2,cy-50+2);
+  fill(195,215,165); text('Lost in the cave',cx,cy-50);
   textStyle(NORMAL); textSize(height*0.022); fill(140,168,115);
-  text('she never made it home.',cx,cy+2);
+  text('She was so close to home.',cx,cy+2);
   textSize(height*0.018); fill(100,130,80);
 
-  let reason=levelTimer>=TIME_LIMIT?'the forest swallowed the last of the light.':'the cold crept in. try again';
+  let reason=levelTimer>=TIME_LIMIT?'You took too long and bears ate you.':'You Died. Try Again';
   text(reason,cx,cy+30);
   if (floor(frameCount/30)%2===0) { textSize(height*0.019); fill(160,190,130); text('press SPACE to try again',cx,cy+68); }
   textStyle(NORMAL);
@@ -1006,6 +1007,7 @@ function keyPressed() {
   if (key===' ' && (gameWon||gameLost)) {
     gameWon=false; gameLost=false;
     worldX=0; flipped=false; flipTimer=0; flipIndex=0;
+
     introTimer=INTRO_DISPLAY_FRAMES + INTRO_FADE_FRAMES; introFadeStarted=false; countdown=0; countdownTimer=0;
     hp=MAX_HP; invTimer=0; levelTimer=0;
     velY=0; onGround=true;
