@@ -95,7 +95,7 @@ let   flipTimer     = 0;
 const FLIP_DURATION = 320;
 let   countdown     = 0;
 let   countdownTimer = 0;
-const COUNTDOWN_FRAMES = 55;
+const COUNTDOWN_FRAMES = 25;
 
 
 const LOGS = [
@@ -162,7 +162,7 @@ let PLATFORMS = [
   { baseWx: 10, wx: 10, wyOff: 0.50, speed: 6, dir: 1, minWx: 5500, maxWx: 6000 }, // platform 4 speed 1.25
 
 ];
-const PLAT_W = 350;
+const PLAT_W = 400;
 const PLAT_H = 10;
 
 function updatePlatDistance() {
