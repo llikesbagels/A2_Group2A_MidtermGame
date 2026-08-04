@@ -100,6 +100,8 @@ const COUNTDOWN_FRAMES = 55;
 const LOGS = [
   { wx: 500, kind: 'log', transformed: false }, // log 1: edit x-position here
   { wx: 3600, kind: 'log', transformed: false }, // log 2: edit x-position here
+  { wx: 4000, kind: 'log', transformed: false }, // log 2: edit x-position here
+
   { wx: 7000, kind: 'log', transformed: false }, // log 2: edit x-position here
 
   //{ wx: 4800 }, // removed log before the platform section
@@ -110,8 +112,7 @@ const ROCKS = [
   { wx: 3000, kind: 'rock', transformed: false }, // rock 1: edit x-position here
   { wx: 3500, kind: 'rock', transformed: false }, // rock 2: edit x-position here
   { wx: 6000, kind: 'rock', transformed: false }, // rock 3: edit x-position here
-  { wx: 4000, kind: 'rock', transformed: false }, // rock transforms into a log once the player passes it
-  { wx: 4100, kind: 'rock', transformed: false }, // rock transforms into a log once the player passes it
+  { wx: 3800, kind: 'rock', transformed: false }, // rock transforms into a log once the player passes it
 
   { wx: 4200, kind: 'rock', transformed: false }, // rock 3: edit x-position here
 
@@ -124,7 +125,8 @@ let animals = [
   { wx:4000, type:'racoon', dir: 1, range: 90, speed:1.5, frame:0, ft:0, vx:0 },
   { wx:1300, type:'bear', dir: 1, range:100, speed:3, frame:0, ft:1, vx:2 },
   { wx:0, type:'bear', dir: 1, range:100, speed:5, frame:0, ft:1, vx:2 },
-    { wx:8000, type:'bear', dir: 1, range:100, speed:5, frame:0, ft:1, vx:2 },
+    { wx:8000, type:'bear', dir: 1, range:100, speed:7.5, frame:0, ft:1, vx:2 },
+    { wx:9000, type:'bear', dir: 1, range:100, speed:5, frame:0, ft:1, vx:2 },
 
 
 ];
@@ -150,12 +152,11 @@ let PLATFORMS = [
 
   { baseWx: 4500, wx: 5650, wyOff: 0.20, speed: 6, dir: 1, minWx: 1500, maxWx: 2000 }, // platform 1 speed 0.65
   { baseWx: 5920, wx: 5920, wyOff: 0.28, speed: 4, dir: 1, minWx: 1750, maxWx: 2250 }, // platform 2 speed 0.85
-     { baseWx: 6480, wx: 6480, wyOff: 0.50, speed: 6, dir: 1, minWx: 2300, maxWx: 2700 }, // platform 4 speed 1.25
-
+  { baseWx: 6480, wx: 6480, wyOff: 0.50, speed: 6, dir: 1, minWx: 2300, maxWx: 2700 }, // platform 4 speed 1.25
    
   { baseWx: 10, wx: 10, wyOff: 0.30, speed: 2, dir: 1, minWx: 4000, maxWx: 5000 }, // platform 4 speed 1.25
-
-  { baseWx: 10, wx: 10, wyOff: 0.30, speed: 6, dir: 1, minWx: 4000, maxWx: 5000 }, // platform 4 speed 1.25
+  { baseWx: 10, wx: 10, wyOff: 0.50, speed: 6, dir: 1, minWx: 4500, maxWx: 6000 }, // platform 4 speed 1.25
+  { baseWx: 10, wx: 10, wyOff: 0.50, speed: 6, dir: 1, minWx: 5500, maxWx: 6000 }, // platform 4 speed 1.25
 
 ];
 const PLAT_W = 350;
@@ -168,6 +169,17 @@ function updatePlatDistance() {
       p.dir *= -1;
       p.wx = constrain(p.wx, p.minWx, p.maxWx - 100);
     }
+  }
+}
+
+function resetObstacleStates() {
+  for (let o of LOGS) {
+    o.kind = 'log';
+    o.transformed = false;
+  }
+  for (let o of ROCKS) {
+    o.kind = 'rock';
+    o.transformed = false;
   }
 }
 
@@ -191,7 +203,7 @@ function preload() {
   }
   imgBgTrees   = loadImage('assets/images/Background.png');
   //imgBushes    = loadImage('assets/images/Asset9.png');
-  title        = loadImage('assets/images/title.PNG');
+  title        = loadImage('assets/images/nothing.png');
   elleground   = loadImage('assets/images/Redux2.png');
 
 
@@ -677,7 +689,7 @@ function checkDamage() {
   let gy=groundY();
   let worldPlayerX = worldX + charX;
   // immediate death if player is over the blue pit area and at/near ground level
-  let playerInPit = worldPlayerX > PIT_START && worldPlayerX < PIT_END;
+  let playerInPit = worldPlayerX > PIT_START && worldPlayerX < PIT_END || worldPlayerX > PIT_START + 3000 && worldPlayerX < PIT_END + 3000;
   if (playerInPit && charY >= gy - height*0.05) { gameLost=true; if (sndMusic && sndMusic.isLoaded()) sndMusic.stop(); return; }
   // also keep falling-into-pit detection
   let fallingIn = !onGround && charY > gy - height*0.10 && velY > 2;
@@ -998,6 +1010,7 @@ function keyPressed() {
     hp=MAX_HP; invTimer=0; levelTimer=0;
     velY=0; onGround=true;
     charX=width*0.25; charY=groundY();
+    resetObstacleStates();
     animals.forEach(a=>{a.wx=a.startWx;a.frame=0;a.ft=0;});
     if (sndMusic && sndMusic.isLoaded()) { sndMusic.stop(); sndMusic.loop(); }
   }
