@@ -1,6 +1,4 @@
-﻿
-
-let imgSky, imgBgTrees, imgBushes, imgGround, imgFgTrees;
+﻿let imgSky, imgBgTrees, imgBushes, imgGround, imgFgTrees;
 let imgSprites, imgLog, imgRock, imgRacoon, imgRabbit;
 let imgSign, imgPlatform, imgPlatform2, imgSpikes, imgFinishSign;
 
