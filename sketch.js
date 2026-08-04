@@ -119,10 +119,6 @@ const ROCKS = [
 
 ];
 
-const TALLROCKS = [
-  
-  { wx: 6000 }, // rock 3: edit x-position here
-];
 
 
 let animals = [
@@ -214,17 +210,10 @@ function preload() {
   imgFinishSign= loadImage('assets/images/village.jpg');
   bear = loadImage('assets/images/Beardouble3.png');
   wall = loadImage('assets/images/Wall2.png');
-  tallrock = loadImage('assets/images/tallrock.png');
   water = loadImage('assets/images/Water.png');
 
 
-  // NOTE: sounds are deliberately NOT loaded here. p5.sound's preload
-  // tracking does not reliably resolve on a failed/missing file even
-  // with an error callback, which can hang preload() forever and
-  // block setup() — and therefore createCanvas() — from ever running.
-  // Sounds are loaded separately in setup() instead, fully decoupled
-  // from preload's blocking wait. Every .play()/.stop() call already
-  // checks .isLoaded(), so this is safe even if a file never arrives.
+  
 }
 
 
@@ -389,11 +378,6 @@ function draw() {
         if (sxNew + bearScreenW*0.5 > osx + 12 && sxNew - bearScreenW*0.5 < osx + rockW - 12) { blocked = true; break; }
       }
 
-      if (!blocked) for (let o of TALLROCKS) {
-        let osx = toScreen(o.wx);
-        let tallRockW = rockW * 3;
-        if (sxNew + bearScreenW*0.5 > osx + 12 && sxNew - bearScreenW*0.5 < osx + tallRockW - 12) { blocked = true; break; }
-      }
 
       if (blocked) {
         // reverse direction so bears don't cross obstacles / pit
@@ -615,12 +599,7 @@ function drawObstacles() {
     }
   }
 
-   for (let o of TALLROCKS) {
-    let sx=toScreen(o.wx);
-    if (sx<-200||sx>width+200) continue;
-    let tallRockW = rockW * 5;
-    image(tallrock, sx, 0, tallRockW, height, 400, 56, 500, 500);
-  }
+   
 
 }
 
