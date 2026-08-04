@@ -58,7 +58,7 @@ let isMoving   = false;
 
 
 const GRAVITY    = 0.65;
-const JUMP_FORCE = -18;
+const JUMP_FORCE = -20;
 const WALK_SPEED = 7;
 
 
@@ -111,7 +111,7 @@ const ROCK_LOG_SWAP_MARGIN = 80;
 
 const ROCKS = [
   { wx: 3000, kind: 'rock', transformed: false }, // rock 1: edit x-position here
-  { wx: 3500, kind: 'rock', transformed: false }, // rock 2: edit x-position here
+  { wx: 3400, kind: 'rock', transformed: false }, // rock 2: edit x-position here
   { wx: 6000, kind: 'rock', transformed: false }, // rock 3: edit x-position here
   { wx: 3800, kind: 'rock', transformed: false }, // rock transforms into a log once the player passes it
 
@@ -697,7 +697,7 @@ function checkDamage() {
   if (playerInPit && charY >= gy - height*0.05) { gameLost=true; if (sndMusic && sndMusic.isLoaded()) sndMusic.stop(); return; }
   // also keep falling-into-pit detection
   let fallingIn = !onGround && charY > gy - height*0.10 && velY > 2;
-  if (playerInPit && fallingIn) { gameLost=true; if (sndMusic && sndMusic.isLoaded()) sndMusic.stop(); return; }
+  if (playerInPit && fallingIn) { takeDamage() * 2; if (sndMusic && sndMusic.isLoaded()) sndMusic.stop(); return; }
 
 
   if (charY<gy-height*0.05) return;
