@@ -1,6 +1,4 @@
-﻿//  THROUGH THE TREES — Tutorial Level
-// ─────────────────────────────────────────────────────────
-
+﻿
 
 let imgSky, imgBgTrees, imgBushes, imgGround, imgFgTrees;
 let imgSprites, imgLog, imgRock, imgRacoon, imgRabbit;
@@ -63,7 +61,7 @@ let isMoving   = false;
 
 const GRAVITY    = 0.65;
 const JUMP_FORCE = -18;
-const WALK_SPEED = 7;
+const WALK_SPEED = 9.6;
 
 
 let worldX      = 0;
@@ -102,18 +100,22 @@ const COUNTDOWN_FRAMES = 55;
 
 
 const LOGS = [
-  { wx: 500 }, // log 1: edit x-position here
-  { wx: 3600 }, // log 2: edit x-position here
-  { wx: 7000 }, // log 2: edit x-position here
+  { wx: 500, kind: 'log', transformed: false }, // log 1: edit x-position here
+  { wx: 3600, kind: 'log', transformed: false }, // log 2: edit x-position here
+  { wx: 7000, kind: 'log', transformed: false }, // log 2: edit x-position here
 
   //{ wx: 4800 }, // removed log before the platform section
 ];
+const ROCK_LOG_SWAP_MARGIN = 80;
+
 const ROCKS = [
-  { wx: 3000 }, // rock 1: edit x-position here
-  { wx: 3500 }, // rock 2: edit x-position here
-  { wx: 6000 }, // rock 3: edit x-position here
-    { wx: 4000 }, // rock 3: edit x-position here
-  { wx: 4200 }, // rock 3: edit x-position here
+  { wx: 3000, kind: 'rock', transformed: false }, // rock 1: edit x-position here
+  { wx: 3500, kind: 'rock', transformed: false }, // rock 2: edit x-position here
+  { wx: 6000, kind: 'rock', transformed: false }, // rock 3: edit x-position here
+  { wx: 4000, kind: 'rock', transformed: false }, // rock transforms into a log once the player passes it
+  { wx: 4100, kind: 'rock', transformed: false }, // rock transforms into a log once the player passes it
+
+  { wx: 4200, kind: 'rock', transformed: false }, // rock 3: edit x-position here
 
 ];
 
@@ -137,9 +139,7 @@ animals.forEach(a => a.startWx = a.wx);
 
 const PIT_START  = 1500;
 const PIT_END    = 3000;
-const SLOW_PIT_START = 4000;
-const SLOW_PIT_END   = 5000;
-const SLOW_PIT_SPEED_REDUCTION = 3;
+
 
 let platdistance = 0;
 let platdistanceDir = 1;
@@ -154,15 +154,14 @@ const PLAT_DISTANCE_MAX = 2250;
 let PLATFORMS = [
   { baseWx: 1140, wx: 1140, wyOff: 0.20, speed: 0, dir: 1, minWx: 1140, maxWx: 1140 }, // static platform before blue pit
 
-  { baseWx: 4500, wx: 5650, wyOff: 0.20, speed: 3, dir: 1, minWx: 1500, maxWx: 2000 }, // platform 1 speed 0.65
+  { baseWx: 4500, wx: 5650, wyOff: 0.20, speed: 6, dir: 1, minWx: 1500, maxWx: 2000 }, // platform 1 speed 0.65
   { baseWx: 5920, wx: 5920, wyOff: 0.28, speed: 4, dir: 1, minWx: 1750, maxWx: 2250 }, // platform 2 speed 0.85
-  { baseWx: 6480, wx: 6480, wyOff: 0.50, speed: 5, dir: 1, minWx: 2300, maxWx: 2700 }, // platform 4 speed 1.25
-     { baseWx: 6480, wx: 6480, wyOff: 0.50, speed: 4, dir: 1, minWx: 2300, maxWx: 2700 }, // platform 4 speed 1.25
+     { baseWx: 6480, wx: 6480, wyOff: 0.50, speed: 6, dir: 1, minWx: 2300, maxWx: 2700 }, // platform 4 speed 1.25
 
    
-  { baseWx: 10, wx: 10, wyOff: 0.50, speed: 2, dir: 1, minWx: 4000, maxWx: 5000 }, // platform 4 speed 1.25
+  { baseWx: 10, wx: 10, wyOff: 0.30, speed: 2, dir: 1, minWx: 4000, maxWx: 5000 }, // platform 4 speed 1.25
 
-  { baseWx: 10, wx: 10, wyOff: 0.50, speed: 6, dir: 1, minWx: 4000, maxWx: 5000 }, // platform 4 speed 1.25
+  { baseWx: 10, wx: 10, wyOff: 0.30, speed: 6, dir: 1, minWx: 4000, maxWx: 5000 }, // platform 4 speed 1.25
 
 ];
 const PLAT_W = 350;
@@ -173,7 +172,7 @@ function updatePlatDistance() {
     p.wx += p.speed * p.dir;
     if (p.wx <= p.minWx || p.wx >= p.maxWx) {
       p.dir *= -1;
-      p.wx = constrain(p.wx, p.minWx, p.maxWx);
+      p.wx = constrain(p.wx, p.minWx, p.maxWx - 100);
     }
   }
 }
@@ -204,19 +203,19 @@ function preload() {
 
   imgFgTrees   = loadImage('assets/images/Foreground.png');
   imgSprites   = loadImage('assets/images/sprites2.png');
-  imgLog       = loadImage('assets/images/AMber.png');
-  imgRock      = loadImage('assets/images/Rocksharp.png');
-  imgRacoon    = loadImage('assets/images/racoon.png');
-  imgRabbit    = loadImage('assets/images/rabbit.png');
+  imgLog       = loadImage('assets/images/Amber.png');
+  imgRock      = loadImage('assets/images/rocksharp.png');
+  imgRacoon    = loadImage('assets/images/nothing.png');
+  imgRabbit    = loadImage('assets/images/nothing.png');
   imgSign      = loadImage('assets/images/sign.png');
-  imgPlatform  = loadImage('assets/images/Plat.png');
-  imgPlatform2 = loadImage('assets/images/Plat.png');
+  imgPlatform  = loadImage('assets/images/realplatform.png');
+  imgPlatform2 = loadImage('assets/images/realplatform.png');
   imgSpikes    = loadImage('assets/images/spikes.png');
   imgFinishSign= loadImage('assets/images/village.jpg');
   bear = loadImage('assets/images/Beardouble3.png');
-  wall = loadImage('assets/images/stonewalled.png');
+  wall = loadImage('assets/images/Wall2.png');
   tallrock = loadImage('assets/images/tallrock.png');
-  water = loadImage('assets/images/water.png');
+  water = loadImage('assets/images/Water.png');
 
 
   // NOTE: sounds are deliberately NOT loaded here. p5.sound's preload
@@ -280,9 +279,20 @@ function draw() {
   let playerWorldX = worldX + charX;
   let currentWalkSpeed = WALK_SPEED;
   let playerOnGround = charY >= 100 - height * 0.05;
-  if (playerWorldX >= SLOW_PIT_START && playerWorldX <= SLOW_PIT_END && playerOnGround) {
-    currentWalkSpeed = max(1, WALK_SPEED - SLOW_PIT_SPEED_REDUCTION);
+
+  for (let o of LOGS) {
+    if (!o.transformed && playerWorldX > o.wx + ROCK_LOG_SWAP_MARGIN + 370) {
+      o.kind = o.kind === 'log' ? 'rock' : 'log';
+      o.transformed = true;
+    }
   }
+  for (let o of ROCKS) {
+    if (!o.transformed && playerWorldX > o.wx + ROCK_LOG_SWAP_MARGIN + 370) {
+      o.kind = o.kind === 'rock' ? 'log' : 'rock';
+      o.transformed = true;
+    }
+  }
+
 
   if (goLeft)  {
     worldX = max(0, worldX - currentWalkSpeed);
@@ -420,7 +430,7 @@ function draw() {
   drawBG();
   //drawStartSign();
   drawPit();
-  drawSlowPit();
+   drawPit2();
   drawPlatforms();
   drawObstacles();
   drawAnimals();
@@ -539,7 +549,7 @@ function drawPit() {
   let pitW = pex - psx;
   if (pex < -10 || psx > width+10) return;
 
-  image(wall,psx - 20, 0, pitW + 20, 600);
+  image(wall,psx - 50, -20, pitW + 50, 600);
 
   image(water, psx, gy - 20, pitW, 200);
   
@@ -548,35 +558,31 @@ function drawPit() {
 
 }
 
+function drawPit2(){
+  let gy  = groundY();
+  let psx = toScreen(PIT_START + 3000);
+  let pex = toScreen(PIT_END + 3000);
+  let pitW = pex - psx;
+  if (pex < -10 || psx > width+10) return;
 
-// ─────────────────────────────────────────────────────────
-function drawSlowPit() {
-  let gy = groundY();
-  let psx = toScreen(SLOW_PIT_START);
-  let pex = toScreen(SLOW_PIT_END);
-  if (pex < -10 || psx > width + 10) return;
+  image(wall,psx - 50, -20, pitW + 50, 600);
 
-  noStroke();
-  fill(60, 100, 210, 120);
-  rect(psx, gy, pex - psx, height * 2);
-
-  fill(255);
-  textAlign(CENTER, CENTER);
-  textSize(height * 0.025);
-  text('SLOW PIT', psx + (pex - psx) / 2, gy + height * 0.06);
+  image(water, psx, gy - 20, pitW, 200);
 }
 
 
 // ─────────────────────────────────────────────────────────
+
+
+// ─────────────────────────────────────────────────────────
 function drawPlatforms() {
-  let srcX2=3, srcY2=100, srcW2=148, srcH2=229;
   imageMode(CORNER);
   for (let p of PLATFORMS) {
     let sx=toScreen(p.wx);
     let py=platY(p);
     if (sx < -PLAT_W-20 || sx > width+20) continue;
     let ih=groundY()-py+PLAT_H;
-    image(imgPlatform, sx, py, PLAT_W, ih, srcX2, srcY2, srcW2, srcH2);
+    image(imgPlatform, sx, py, PLAT_W, ih);
   }
   imageMode(CENTER);
 }
@@ -593,12 +599,20 @@ function drawObstacles() {
   for (let o of LOGS) {
     let sx=toScreen(o.wx);
     if (sx<-200||sx>width+200) continue;
-    image(imgLog, sx, gy - logH + 4, logW, logH);
+    if (o.kind === 'rock') {
+      image(imgRock, sx, gy - (rockH*2), rockW, rockH * 2);
+    } else {
+      image(imgLog, sx, gy - logH + 4, logW, logH);
+    }
   }
   for (let o of ROCKS) {
     let sx=toScreen(o.wx);
     if (sx<-200||sx>width+200) continue;
-    image(imgRock, sx - 10, gy - rockH * 2 , rockW * 1.5, rockH * 2);
+    if (o.kind === 'log') {
+      image(imgLog, sx, gy - logH + 4, logW, logH);
+    } else {
+      image(imgRock, sx, gy - (rockH*2), rockW, rockH * 2);
+    }
   }
 
    for (let o of TALLROCKS) {
@@ -703,11 +717,13 @@ function checkDamage() {
 
   for (let o of LOGS) {
     let sx=toScreen(o.wx);
-    if (px2>sx+16&&px1<sx+logW-16) { takeDamage(); return; }
+    let hitW = o.kind === 'rock' ? rockW : logW;
+    if (px2>sx+16 && px1<sx+hitW-16) { takeDamage(); return; }
   }
   for (let o of ROCKS) {
     let sx=toScreen(o.wx);
-    if (px2>sx+16&&px1<sx+rockW-16) { takeDamage(); return; }
+    let hitW = o.kind === 'log' ? logW : rockW;
+    if (px2>sx+16 && px1<sx+hitW-16) { takeDamage(); return; }
   }
   for (let a of animals) {
     let sx=toScreen(a.wx);
