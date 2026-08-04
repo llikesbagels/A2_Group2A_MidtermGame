@@ -491,12 +491,9 @@ function drawBG() {
     skyBot = lerpColor(color(145,185,180), color(210,175,120), t);
   } else if (progress < 0.65) {
     let t = (progress - 0.35) / 0.30;
-    skyTop = lerpColor(color(155,130,100), color(155,115,115), t);
-    skyBot = lerpColor(color(210,175,120), color(215,155,130), t);
-  } else if (progress < 0.85) {
-    let t = (progress - 0.65) / 0.20;
-    skyTop = lerpColor(color(155,115,115), color(90,85,110), t);
-    skyBot = lerpColor(color(215,155,130), color(135,115,130), t);
+   skyTop = lerpColor(color(0,0,0), color(155,130,100), t);
+    skyBot = lerpColor(color(145,185,180), color(210,175,120), t);
+ 
   } else {
     let t = (progress - 0.85) / 0.15;
     skyTop = lerpColor(color(0,0,0), color(30,28,42), t);
