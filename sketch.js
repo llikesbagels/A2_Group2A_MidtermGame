@@ -59,7 +59,7 @@ let isMoving   = false;
 
 const GRAVITY    = 0.65;
 const JUMP_FORCE = -18;
-const WALK_SPEED = 9.6;
+const WALK_SPEED = 7;
 
 
 let worldX      = 0;
