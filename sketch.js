@@ -126,9 +126,8 @@ let animals = [
   { wx:4000, type:'racoon', dir: 1, range: 90, speed:1.5, frame:0, ft:0, vx:0 },
   { wx:1300, type:'bear', dir: 1, range:100, speed:3, frame:0, ft:1, vx:2 },
   { wx:0, type:'bear', dir: 1, range:100, speed:5, frame:0, ft:1, vx:2 },
-    { wx:8000, type:'bear', dir: 1, range:100, speed:7.5, frame:0, ft:1, vx:2 },
-    { wx:7500, type:'bear', dir: 1, range:100, speed:5, frame:0, ft:1, vx:2 },
-    { wx:7600, type:'bear', dir: 1, range:100, speed:5, frame:0, ft:1, vx:2 },
+    { wx:9000, type:'bear', dir: 1, range:100, speed:10, frame:0, ft:1, vx:2 },
+    { wx:8000, type:'bear', dir: 1, range:100, speed:5, frame:0, ft:1, vx:2 },
 
 
 ];
@@ -156,7 +155,9 @@ let PLATFORMS = [
   { baseWx: 5920, wx: 5920, wyOff: 0.28, speed: 4, dir: 1, minWx: 1750, maxWx: 2250 }, // platform 2 speed 0.85
   { baseWx: 6480, wx: 6480, wyOff: 0.50, speed: 6, dir: 1, minWx: 2300, maxWx: 2700 }, // platform 4 speed 1.25
    
-  { baseWx: 10, wx: 10, wyOff: 0.30, speed: 2, dir: 1, minWx: 4000, maxWx: 5000 }, // platform 4 speed 1.25
+  { baseWx: 10, wx: 10, wyOff: 0.30, speed: 4, dir: 1, minWx: 4000, maxWx: 5000 }, // platform 4 speed 1.25
+    { baseWx: 10, wx: 10, wyOff: 0.40, speed: 6, dir: 1, minWx: 4200, maxWx: 4800 }, // platform 4 speed 1.25
+
   { baseWx: 10, wx: 10, wyOff: 0.50, speed: 6, dir: 1, minWx: 4500, maxWx: 6000 }, // platform 4 speed 1.25
   { baseWx: 10, wx: 10, wyOff: 0.50, speed: 6, dir: 1, minWx: 5500, maxWx: 6000 }, // platform 4 speed 1.25
 
@@ -206,6 +207,8 @@ function preload() {
   imgBgTrees   = loadImage('assets/images/Background.png');
   //imgBushes    = loadImage('assets/images/Asset9.png');
   title        = loadImage('assets/images/nothing.png');
+    imgFinishSign= loadImage('assets/images/Village.png');
+
   elleground   = loadImage('assets/images/Redux2.png');
 
 
@@ -219,7 +222,6 @@ function preload() {
   imgPlatform  = loadImage('assets/images/realplatform.png');
   imgPlatform2 = loadImage('assets/images/realplatform.png');
   imgSpikes    = loadImage('assets/images/spikes.png');
-  imgFinishSign= loadImage('assets/images/village.jpg');
   bear = loadImage('assets/images/Beardouble3.png');
   wall = loadImage('assets/images/Wall2.png');
   water = loadImage('assets/images/Water.png');
@@ -668,7 +670,7 @@ function drawFinishSign() {
   if (sx<-300||sx>width+300) return;
   let dh=height*0.28, dw=dh*(300/400);
   imageMode(CORNER);
-  image(imgFinishSign, sx-dw*0.3,0, 600, 600);
+  image(imgFinishSign, sx-dw*0.3,0, 500, 450);
   imageMode(CENTER);
 }
 
@@ -867,6 +869,7 @@ function drawDebugPanel() {
     { label: "3: Level 3", x: 310 },
     { label: "K: Win", x: 410 },
     { label: "L: Game Over", x: 510 },
+    { label: "Q: Village", x: 610 },
   ];
 
 
@@ -981,6 +984,11 @@ function keyPressed() {
 
   if (key === 'o' || key === 'O') {
     debugMode = !debugMode;
+    return;
+  }
+
+  if (key === 'q' || key === 'Q') {
+    worldX = 7000;
     return;
   }
 
